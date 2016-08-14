@@ -49,13 +49,13 @@ def survival_stats(data, outcomes, key, filters = []):
     
     # Check that the key exists
     if key not in data.columns.values :
-        print "'{}' is not a feature of the Titanic data. Did you spell something wrong?".format(key)
+        print("'{}' is not a feature of the Titanic data. Did you spell something wrong?".format(key))
         return False
 
     # Return the function before visualizing if 'Cabin' or 'Ticket'
     # is selected: too many unique categories to display
     if(key == 'Cabin' or key == 'PassengerId' or key == 'Ticket'):
-        print "'{}' has too many unique categories to display! Try a different feature.".format(key)
+        print("'{}' has too many unique categories to display! Try a different feature.".format(key))
         return False
 
     # Merge data and outcomes into single dataframe
@@ -140,6 +140,39 @@ def survival_stats(data, outcomes, key, filters = []):
     # Report number of passengers with missing values
     if sum(pd.isnull(all_data[key])):
         nan_outcomes = all_data[pd.isnull(all_data[key])]['Survived']
-        print "Passengers with missing '{}' values: {} ({} survived, {} did not survive)".format( \
-              key, len(nan_outcomes), sum(nan_outcomes == 1), sum(nan_outcomes == 0))
+        print("Passengers with missing '{}' values: {} ({} survived, {} did not survive)".format( \
+              key, len(nan_outcomes), sum(nan_outcomes == 1), sum(nan_outcomes == 0)))
+
+def predictions_2(data):
+    """ Model with two features: 
+            - Predict a passenger survived if they are female.
+            - Predict a passenger survived if they are male and younger than 10. """
+    
+    predictions = []
+    for _, passenger in data.iterrows():
+        
+        # Remove the 'pass' statement below 
+        # and write your prediction conditions here
+        if passenger['Sex'] == 'female': predictions.append(1)
+        elif passenger['Sex'] == 'male' and passenger['Age'] < 10 : predictions.append(1)
+        else: predictions.append(0)
+    
+    # Return our predictions
+    return pd.Series(predictions)
+
+# accuracy score
+def accuracy_score(truth, pred):
+    """ Returns accuracy score for input truth and predictions. """
+
+    # Ensure that the number of predictions matches number of outcomes
+    if len(truth) == len(pred): 
+
+        # Calculate and return the accuracy as a percent
+        return "Predictions have an accuracy of {:.2f}%.".format((truth == pred).mean()*100)
+
+    else:
+        return "Number of predictions does not match number of outcomes!"
+
+def printPred(outcomes, predictions):
+    print(accuracy_score(outcomes, predictions))
 
