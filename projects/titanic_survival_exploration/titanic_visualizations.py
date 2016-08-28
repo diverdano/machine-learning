@@ -1,6 +1,32 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
+
+# Load the dataset
+L = pd.read_csv('titanic_data.csv')
+# Limit to categorical data
+X = L.select_dtypes(include=[object])
+
+Y = pd.DataFrame()
+
+le = LabelEncoder()
+X['Embarked']   = X['Embarked'].factorize()[0]     # address Nan values
+X['Cabin']      = X['Cabin'].factorize()[0]     # address Nan values
+
+for feature in X.columns:
+    le.fit(X[feature])
+    Y[feature] = le.transform(X[feature])
+
+
+# TODO: create a OneHotEncoder object, and fit it to all of X.
+
+enc = OneHotEncoder()
+enc.fit(Y)
+
+#TODO: transform the categorical titanic data, and store the transformed labels in the variable `onehotlabels`
+onehotlabels = enc.fit_transform(Y)
 
 def filter_data(data, condition):
     """
