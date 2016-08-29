@@ -5,6 +5,7 @@ import pandas as pd
 
 # data prep
 from sklearn import cross_validation
+from sklearn.cross_validation import KFold
 from sklearn.datasets import load_linnerud      # linear regression data set
 
 # models
@@ -22,7 +23,13 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
-from sklearn.metrics import explained_variance_score
+from sklearn.metrics import explained_variance_score, make_scorer
+
+# plot
+from sklearn.learning_curve import learning_curve
+import matplotlib.pyplot as plt
+
+
 
 
 def loadData(file = '~/dev/machine-learning/projects/titanic_survival_exploration/titanic_data.csv'):
