@@ -22,7 +22,7 @@ def plot_curve():
     # YOUR CODE HERE
     reg = DecisionTreeRegressor()
     reg.fit(X,y)
-    print reg.score(X,y)
+    print(reg.score(X,y))
     estimator = DecisionTreeRegressor()
     train_sizes=np.linspace(.1, 1.0, 5)
 

@@ -137,7 +137,8 @@ def splitTrainData(x,y,test_size=0.25, random_state=0, model='Decision Tree'):
                 'labels_test'       : Yt}
 
 
-def plotData(data, title=None, xlabel=None, ylabel=None, grid=True, legend=True):
+#def plotData(data, title=None, xlabel=None, ylabel=None, grid=True, legend=True):
+def plotData(plot_series, title=None, xlabel=None, ylabel=None, grid=True, legend=True):
     ''' plot data series '''
     plt.figure()
     if title == None:   title = 'Title of graph'

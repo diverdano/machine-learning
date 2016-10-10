@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 # Load the dataset
-X = pd.read_csv('titanic_data.csv')
+X = pd.read_csv('projects/titanic_survival_exploration/titanic_data.csv')
 
 X = X._get_numeric_data()
 y = X['Survived']
@@ -31,13 +31,13 @@ clf = DecisionTreeClassifier()
 clf.fit(Xtr, Ytr)
 dt_recall = recall(clf.predict(Xt),Yt)
 dt_precision = precision(clf.predict(Xt),Yt)
-print "Decision Tree recall: {:.2f} and precision: {:.2f}".format(dt_recall,dt_precision)
+print("Decision Tree recall: {:.2f} and precision: {:.2f}".format(dt_recall,dt_precision))
 
 clf = GaussianNB()
 clf.fit(Xtr, Ytr)
 g_recall = recall(clf.predict(Xt),Yt)
 g_precision = precision(clf.predict(Xt),Yt)
-print "GaussianNB recall: {:.2f} and precision: {:.2f}".format(g_recall,g_precision)
+print("GaussianNB recall: {:.2f} and precision: {:.2f}".format(g_recall,g_precision))
 
 results = {
   "Naive Bayes Recall": g_recall,

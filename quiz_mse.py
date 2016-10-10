@@ -22,12 +22,12 @@ Xtr, Xt, Ytr, Yt = cross_validation.train_test_split(x, y, test_size=.25, random
 reg = DecisionTreeRegressor()
 reg.fit(Xtr, Ytr)
 DT_mse = mse(reg.predict(Xt),Yt)
-print "Decision Tree mean squared error: {:.2f}".format(DT_mse)
+print("Decision Tree mean squared error: {:.2f}".format(DT_mse))
 
 reg = LinearRegression()
 reg.fit(Xtr, Ytr)
 LR_mse = mse(reg.predict(Xt),Yt)
-print "Linear regression mean squared error: {:.2f}".format(LR_mse)
+print("Linear regression mean squared error: {:.2f}".format(LR_mse))
 
 results = {
  "Linear Regression": LR_mse,

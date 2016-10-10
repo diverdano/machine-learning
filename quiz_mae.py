@@ -22,13 +22,14 @@ Xtr, Xt, Ytr, Yt = cross_validation.train_test_split(x, y, test_size=.25, random
 reg = DecisionTreeRegressor()
 reg.fit(Xtr, Ytr)
 DTR_mae = mae(reg.predict(Xt),Yt)
-print "Decision Tree mean absolute error: {:.2f}".format(DTR_mae)
+print("Decision Tree mean absolute error: {:.2f}".format(DTR_mae))
 
 reg = LinearRegression()
 reg.fit(Xtr, Ytr)
 LR_mae = mae(reg.predict(Xt),Yt)
-print "Linear regression mean absolute error: {:.2f}".format(LR_mae)
+print("Linear regression mean absolute error: {:.2f}".format(LR_mae))
 
 results = {
  "Linear Regression": DTR_mae,
  "Decision Tree": LR_mae
+}
