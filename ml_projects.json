@@ -1,0 +1,12 @@
+{
+    "boston_housing": {
+        "file": "projects/boston_housing/housing.csv",
+        "target": "MEDV",
+        "features": ["RM", "LSTAT", "PTRATIO"]
+    },
+    "titanic": {
+        "file": "projects/titanic_survival_exploration/titanic_data.csv",
+        "target": "Survived",
+        "features": ["PassengerId", "Pclass", "SibSp", "Parch", "Fare"]
+    }
+}

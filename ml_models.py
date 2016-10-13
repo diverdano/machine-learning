@@ -4,10 +4,11 @@
 # key libraries
 import numpy as np
 import pandas as pd
+import simplejson as json
 
 # data prep
-from sklearn import cross_validation
-from sklearn.cross_validation import KFold
+from sklearn import model_selection
+from sklearn.model_selection import KFold
 
 # data sets
 from sklearn.datasets import load_linnerud      # linear regression data set
@@ -33,8 +34,35 @@ from sklearn.metrics import r2_score
 from sklearn.metrics import explained_variance_score, make_scorer
 
 # plot
-from sklearn.learning_curve import learning_curve
+from sklearn.model_selection import learning_curve
 import matplotlib.pyplot as plt
+
+# === model object ===
+
+class Model(object):
+    ''' base model object '''
+    infile = 'ml_projects.json'
+    def __init__(self, project='boston_housing'):
+        if project in self.projects.keys():
+            self.desc       = project # if exists project in self.projects ...
+            self.file       = self.projects[self.desc]['file']
+            self.target     = self.projects[self.desc]['target']
+            self.features   = self.projects[self.desc]['features']
+            self.loadData()
+            self.prepData()
+        else:   print('list of projects: ' + str(self.projects.keys()))
+    def loadProjects(self):
+        self.file_projects  = json.load(open(self.infile))
+    def loadData(self):
+        '''load data set'''
+        self.data           = pd.read_csv(self.file)
+        print("\n" + self.desc + " has {} data points with {} variables each\n".format(*self.data.shape))
+        print(self.data.describe())
+    def prepData(self):
+        '''split out target and features'''
+        self.target_data    = self.data[self.target]
+        self.feature_data   = self.data.drop(self.target, axis = 1)
+
 
 # === load & transform data ===
 
