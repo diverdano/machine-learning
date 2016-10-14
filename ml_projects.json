@@ -1,12 +1,41 @@
 {
-    "boston_housing": {
-        "file": "projects/boston_housing/housing.csv",
-        "target": "MEDV",
-        "features": ["RM", "LSTAT", "PTRATIO"]
+    "reg":{
+        "target": "",
+        "data": ""
+    },
+    "lc":{
+        "target": "",
+        "data": ""
     },
     "titanic": {
         "file": "projects/titanic_survival_exploration/titanic_data.csv",
         "target": "Survived",
-        "features": ["PassengerId", "Pclass", "SibSp", "Parch", "Fare"]
+        "features": [
+            "PassengerId",
+            "Pclass",
+            "SibSp",
+            "Parch",
+            "Fare"
+        ],
+        "drop": "Age"
+    },
+    "olympics": {
+        "file": "projects/olympics/olympic_medals.csv",
+        "target": "country_name",
+        "features": [
+            "gold",
+            "silver",
+            "bronze",
+            "points"
+        ]
+    },
+    "boston_housing": {
+        "file": "projects/boston_housing/housing.csv",
+        "target": "MEDV",
+        "features": [
+            "RM",
+            "LSTAT",
+            "PTRATIO"
+        ]
     }
 }

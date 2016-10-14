@@ -9,6 +9,8 @@ import simplejson as json
 # data prep
 from sklearn import model_selection
 from sklearn.model_selection import KFold
+from sklearn.model_selection import ShuffleSplit
+import sklearn.model_selection as curves
 
 # data sets
 from sklearn.datasets import load_linnerud      # linear regression data set
@@ -36,59 +38,84 @@ from sklearn.metrics import explained_variance_score, make_scorer
 # plot
 from sklearn.model_selection import learning_curve
 import matplotlib.pyplot as plt
+#from projects.boston_housing import visuals as vs
+#import visuals as vs
 
 # === model object ===
 
-class Model(object):
-    ''' base model object '''
-    infile = 'ml_projects.json'
+class ProjectData(object):
+    ''' get and setup data '''
+    infile  = 'ml_projects.json'
+    outfile = 'ml_projects_backup.json'
     def __init__(self, project='boston_housing'):
-        if project in self.projects.keys():
-            self.desc       = project # if exists project in self.projects ...
-            self.file       = self.projects[self.desc]['file']
-            self.target     = self.projects[self.desc]['target']
-            self.features   = self.projects[self.desc]['features']
-            self.loadData()
-            self.prepData()
-        else:   print('list of projects: ' + str(self.projects.keys()))
+        try:
+            self.loadProjects()
+            if project in self.projects.keys():
+                if project == 'reg'     : self.loadRegSample()
+                elif project == 'lc'    : self.loadLearningCurveSample()
+                else:
+                    self.desc       = project # if exists project in self.projects ...
+                    self.file       = self.projects[self.desc]['file']
+                    self.target     = self.projects[self.desc]['target']        # make y or move this to data, or change reg & lc samples?
+                    self.features   = self.projects[self.desc]['features']      # make X or move this to data, or change reg & lc samples?
+                    self.loadData()
+                    self.prepData()
+            else:
+                print('"{}" project not found; list of projects:\n'.format(project))
+                print("\t" + "\n\t".join(list(self.projects.keys())))
+        except: # advanced use - except JSONDecodeError?
+            print('having issue reading project file...')
     def loadProjects(self):
-        self.file_projects  = json.load(open(self.infile))
+        ''' loads project meta data from file and makes backup '''
+        with open(self.infile) as file:
+            self.projects  = json.load(file)
+        with open(self.outfile, 'w') as outfile:
+            json.dump(self.projects, outfile, indent=4)
+    def saveProjects(self):
+        ''' saves project meta detail to file '''
+        with open(self.infile, 'w') as outfile:
+            json.dump(self.projects, outfile, indent=4)
     def loadData(self):
         '''load data set'''
         self.data           = pd.read_csv(self.file)
-        print("\n" + self.desc + " has {} data points with {} variables each\n".format(*self.data.shape))
+        print("file loaded: {}".format(self.file))
+        print("{} dataset has {} data points with {} variables each\n".format(self.desc, *self.data.shape))
+#        print("\n" + self.desc + " has {} data points with {} variables each\n".format(*self.data.shape))
         print(self.data.describe())
+    def loadRegSample(self):
+        ''' load regression sample dataset '''
+        self.data           = load_linnerud()
+#        self.X, self.y     = self.data.???, self.data.???    setup as dataframe
+        print(self.data.DESCR)
+    def loadLearningCurveSample(self):
+        ''' load learning curve sample dataset '''
+        self.data           = load_digits()
+        print(self.data.DESCR)
     def prepData(self):
-        '''split out target and features'''
+        '''split out target and features based on known column names in project meta data'''
         self.target_data    = self.data[self.target]
         self.feature_data   = self.data.drop(self.target, axis = 1)
+#         if 'drop' in self.projects[self.desc]:                    if need to drop columns...
+#             self.feature_data = self.feature_data.drop(self.)
+#       once dataframe is created: df._get_numeric_data() to limit to numeric data only
+
+class Model(object):
+    ''' base model object '''
+    def __init__(self, project):
+        self.project    = ProjectData(project)
+        self.y          = self.project.target_data          # need to incorporate reg and lc data sets...
+        self.X          = self.project.feature_data
+    def splitTrainTest(self, test_size=0.2, random_state=0):
+        ''' use cross validation to split data into training and test datasets '''
+        self.test_size      = test_size
+        self.random_state   = random_state
+        self.Xtr, self.Xt, self.Ytr, self.Yt = model_selection.train_test_split(self.X, self.y, test_size=self.test_size, random_state=self.random_state)
+    def getR2(self):
+        ''' calculate performance (aka coefficient of determination, goodness of fit) '''
+        self.r2_score   = r2_score(y_true, y_predict)
 
 
-# === load & transform data ===
-
-def loadData(file = '~/dev/machine-learning/projects/titanic_survival_exploration/titanic_data.csv'):
-    '''load the dataset, default to titanic data set'''
-    x = pd.read_csv(file)
-    # Limit to numeric data
-    x = x._get_numeric_data()
-#     Separate the labels
-    y = x['Survived']
-#     Remove labels from the inputs, and age due to missing data
-    del x['Age'], x['Survived']
-    return {'features': x, 'labels': y}
-
-def loadDataReg():
-    '''load regression data sample'''
-    linnerud_data = load_linnerud()
-    x = linnerud_data.data
-    y = linnerud_data.target
-    return {'data': x, 'target': y}
-
-def setup_data():
-    '''setup data for learning curve plots'''
-    digits = load_digits()
-    x, y = digits.data, digits.target
-    return (x,y,digits.data.shape[0])
+# === transform data ===
 
 def splitTrainDataReg(x,y,test_size=0.25, random_state=0, model='Decision Tree'):
     '''split the data into training and testing sets then use classifier or regressor'''
@@ -293,3 +320,131 @@ def plot_DTReg():
 #         # Show the result, scaling the axis for visibility
 #         plt.ylim(-.1,1.1)
 #         plt.show()
+
+
+## === functions from boston_housing ProjectData
+
+def ModelLearning(X, y, tight={'rect':(0,0,0.75,1)}):
+    """ Calculates the performance of several models with varying sizes of training data.
+        The learning and testing scores for each model are then plotted. """
+    
+    # Create 10 cross-validation sets for training and testing
+#    cv = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.2, random_state = 0)
+    cv = ShuffleSplit(n_splits = 10, test_size = 0.2, random_state = 0)
+
+    # Generate the training set sizes increasing by 50
+    train_sizes = np.rint(np.linspace(1, X.shape[0]*0.8 - 1, 9)).astype(int)
+
+    # Create the figure window
+    fig = plt.figure(figsize=(10,7))
+
+    # Create three different models based on max_depth
+    for k, depth in enumerate([1,3,6,10]):
+        
+        # Create a Decision tree regressor at max_depth = depth
+        regressor = DecisionTreeRegressor(max_depth = depth)
+
+        # Calculate the training and testing scores
+        sizes, train_scores, test_scores = curves.learning_curve(regressor, X, y, \
+            cv = cv, train_sizes = train_sizes, scoring = 'r2')
+        
+        # Find the mean and standard deviation for smoothing
+        train_std = np.std(train_scores, axis = 1)
+        train_mean = np.mean(train_scores, axis = 1)
+        test_std = np.std(test_scores, axis = 1)
+        test_mean = np.mean(test_scores, axis = 1)
+
+        # Subplot the learning curve 
+        ax = fig.add_subplot(2, 2, k+1)
+        ax.plot(sizes, train_mean, 'o-', color = 'r', label = 'Training Score')
+        ax.plot(sizes, test_mean, 'o-', color = 'g', label = 'Testing Score')
+        ax.fill_between(sizes, train_mean - train_std, \
+            train_mean + train_std, alpha = 0.15, color = 'r')
+        ax.fill_between(sizes, test_mean - test_std, \
+            test_mean + test_std, alpha = 0.15, color = 'g')
+        
+        # Labels
+        ax.set_title('max_depth = %s'%(depth))
+        ax.set_xlabel('Number of Training Points')
+        ax.set_ylabel('Score')
+        ax.set_xlim([0, X.shape[0]*0.8])
+        ax.set_ylim([-0.05, 1.05])
+    
+    # Visual aesthetics
+#    ax.legend()
+    ax.legend(bbox_to_anchor=(1.05, 2.05), loc='lower left', borderaxespad = 0.)
+    fig.suptitle('Decision Tree Regressor Learning Performances', fontsize = 16, y = 1.03)
+#     tight = {
+#          'pad'      : 1,
+#          'w_pad'    : 1,
+#          'h_pad'    : 1,
+#          'rect'     : (0,0,.75,0)
+#     }
+    fig.set_tight_layout(tight=tight)
+    fig.show()
+#    plt.set_tight_layout()
+#    plt.show()
+
+
+def ModelComplexity(X, y):
+    """ Calculates the performance of the model as model complexity increases.
+        The learning and testing errors rates are then plotted. """
+    
+    # Create 10 cross-validation sets for training and testing
+#    cv = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.2, random_state = 0)
+    cv = ShuffleSplit(n_splits = 10, test_size = 0.2, random_state = 0)
+
+    # Vary the max_depth parameter from 1 to 10
+    max_depth = np.arange(1,11)
+
+    # Calculate the training and testing scores
+    train_scores, test_scores = curves.validation_curve(DecisionTreeRegressor(), X, y, \
+        param_name = "max_depth", param_range = max_depth, cv = cv, scoring = 'r2')
+
+    # Find the mean and standard deviation for smoothing
+    train_mean = np.mean(train_scores, axis=1)
+    train_std = np.std(train_scores, axis=1)
+    test_mean = np.mean(test_scores, axis=1)
+    test_std = np.std(test_scores, axis=1)
+
+    # Plot the validation curve
+    plt.figure(figsize=(7, 5))
+    plt.title('Decision Tree Regressor Complexity Performance')
+    plt.plot(max_depth, train_mean, 'o-', color = 'r', label = 'Training Score')
+    plt.plot(max_depth, test_mean, 'o-', color = 'g', label = 'Validation Score')
+    plt.fill_between(max_depth, train_mean - train_std, \
+        train_mean + train_std, alpha = 0.15, color = 'r')
+    plt.fill_between(max_depth, test_mean - test_std, \
+        test_mean + test_std, alpha = 0.15, color = 'g')
+    
+    # Visual aesthetics
+    plt.legend(loc = 'lower right')
+    plt.xlabel('Maximum Depth')
+    plt.ylabel('Score')
+    plt.ylim([-0.05,1.05])
+    plt.show()
+
+
+def PredictTrials(X, y, fitter, data):
+    """ Performs trials of fitting and predicting data. """
+
+    # Store the predicted prices
+    prices = []
+
+    for k in range(10):
+        # Split the data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, \
+            test_size = 0.2, random_state = k)
+        
+        # Fit the data
+        reg = fitter(X_train, y_train)
+        
+        # Make a prediction
+        pred = reg.predict([data[0]])[0]
+        prices.append(pred)
+        
+        # Result
+        print("Trial {}: ${:,.2f}".format(k+1, pred))
+
+    # Display price range
+    print("\nRange in prices: ${:,.2f}".format(max(prices) - min(prices)))
