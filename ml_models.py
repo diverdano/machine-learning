@@ -141,8 +141,8 @@ class Model(object):
 #        self.scoring_fnc = make_scorer(self.getR2(y_test, y_train))
  
         # TODO: Create the grid search object
-        grid = GridSearchCV(self.regressor, self.params)     #score built into DecisionTreeRegressor
-#        grid = GridSearchCV(regressor, self.params, self.scoring_fnc)
+#        grid = GridSearchCV(self.regressor, self.params)     #score built into DecisionTreeRegressor
+        grid = GridSearchCV(self.regressor, self.params, scoring = make_scorer(r2_score))
 
         # Fit the grid search object to the data to compute the optimal model
         grid = grid.fit(self.X, self.y)
