@@ -101,11 +101,11 @@ class ProjectData(object):
 #       once dataframe is created: df._get_numeric_data() to limit to numeric data only
 
 class Model(object):
+    ''' base model object '''
     test_size       = 0.20
     random_state    = 0
     n_splits        = 10
     params          = {'max_depth': list(range(1,11))}
-    ''' base model object '''
     def __init__(self, project):
         self.project    = ProjectData(project)
         self.y          = self.project.target_data          # need to incorporate reg and lc data sets...
@@ -115,29 +115,67 @@ class Model(object):
 #         self.test_size      = test_size
 #         self.random_state   = random_state
         self.Xtr, self.Xt, self.Ytr, self.Yt = model_selection.train_test_split(self.X, self.y, test_size=self.test_size, random_state=self.random_state)
-    def shuffleSplit(self):
+    def shuffleSplit(self):     # done inside of fit_model
         ''' use cross validation/shuffle to split data into training and test datasets '''
 #        self.cv_sets = ShuffleSplit(self.X.shape[0], n_iter = 10, test_size = 0.20, random_state = 0)
         self.cv_sets = ShuffleSplit(n_splits=self.n_splits, test_size=self.test_size, random_state=self.random_state)
-    def getR2(self):
+#        self.ss_test, self.ss_train = self.cv_sets.split(self.X, self.y)
+#        self.Xtr, self.Xt, Self.Ytr, self.Yt = self.cv_sets.split(self.X, self.y)
+    def getR2(self, y_true, y_predict):
         ''' calculate performance (aka coefficient of determination, goodness of fit) '''
-        self.r2_score   = r2_score(y_true, y_predict)
+        r2_score   = r2_score(y_true, y_predict)
+        return(r2_score)
     def fit_model(self):
         """ Performs grid search over the 'max_depth' parameter for a 
             decision tree regressor trained on the input data [X, y]. """
+#     # Create cross-validation sets from the training data
+#        self.cv_sets = ShuffleSplit(self.X.shape[0], n_iter = 10, test_size = 0.20, random_state = 0)
+        self.cv_sets = ShuffleSplit(n_splits=self.n_splits, test_size=self.test_size, random_state=self.random_state)
         # TODO: Create a decision tree regressor object
         self.regressor = DecisionTreeRegressor()
+
         # TODO: Create a dictionary for the parameter 'max_depth' with a range from 1 to 10
-#        self.params = {'max_depth':list(range(1,10))}
+#        self.params = {'max_depth':list(range(1,10))}      # set within class
+
         # TODO: Transform 'performance_metric' into a scoring function using 'make_scorer' 
-        self.scoring_fnc = make_scorer(self.getR2(y, y_pred))
+#        self.scoring_fnc = make_scorer(self.getR2(y_test, y_train))
+ 
         # TODO: Create the grid search object
-        grid = GridSearchCV(regressor, self.params, self.scoring_fnc)
+        grid = GridSearchCV(self.regressor, self.params)     #score built into DecisionTreeRegressor
+#        grid = GridSearchCV(regressor, self.params, self.scoring_fnc)
+
         # Fit the grid search object to the data to compute the optimal model
-        grid = grid.fit(X, y)
+        grid = grid.fit(self.X, self.y)
         # Return the optimal model after fitting the data
 #        return grid.best_estimator_
         self.best_est = grid.best_estimator_
+        
+# TODO: Import 'make_scorer', 'DecisionTreeRegressor', and 'GridSearchCV'
+
+# def fit_model(X, y):
+#     """ Performs grid search over the 'max_depth' parameter for a 
+#         decision tree regressor trained on the input data [X, y]. """
+#     
+#     # Create cross-validation sets from the training data
+#     cv_sets = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.20, random_state = 0)
+# 
+#     # TODO: Create a decision tree regressor object
+#     regressor = None
+# 
+#     # TODO: Create a dictionary for the parameter 'max_depth' with a range from 1 to 10
+#     params = {}
+# 
+#     # TODO: Transform 'performance_metric' into a scoring function using 'make_scorer' 
+#     scoring_fnc = None
+# 
+#     # TODO: Create the grid search object
+#     grid = None
+# 
+#     # Fit the grid search object to the data to compute the optimal model
+#     grid = grid.fit(X, y)
+# 
+#     # Return the optimal model after fitting the data
+#     return grid.best_estimator_
 
 # === transform data ===
 
