@@ -170,11 +170,11 @@ class Model(object):
         plt.plot(feature_series, reg.predict(feature_series), color='red', linewidth=1)
         plt.scatter(feature_series, self.y, alpha=0.5, c=self.y)
         plt.show()
-    def viewScatterPlots(self, newX, newY):
+    def viewScatterPlots(self, newX, newY, color_xy='blue', color_newxy='red'):
         ''' setup charts for plotting input features vs scatterplot of historical values '''
         for i, feat in enumerate(self.X.keys()):
-            plt.scatter(self.X[feat], self.y)
-            plt.scatter(newX[i], newY, color='red')
+            plt.scatter(self.X[feat], self.y, color=color_xy)
+            plt.scatter(newX[i], newY, color=color_newxy)
             plt.xlabel('feature {}'.format(feat))
             plt.show()
     def viewRegPlots(self):
