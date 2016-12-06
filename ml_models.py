@@ -100,6 +100,9 @@ class ProjectData(object):
 #             self.feature_data = self.feature_data.drop(self.)
 #       once dataframe is created: df._get_numeric_data() to limit to numeric data only
 
+client_data = [[5,17,15],[4,32,22],[8,3,12]]
+clients = np.transpose(client_data)
+
 class Model(object):
     ''' base model object '''
     test_size       = 0.20
@@ -110,6 +113,7 @@ class Model(object):
         self.project    = ProjectData(project)
         self.y          = self.project.target_data          # need to incorporate reg and lc data sets...
         self.X          = self.project.feature_data
+        self.fit_model()
     def splitTrainTest(self):
         ''' use cross validation to split data into training and test datasets '''
 #         self.test_size      = test_size
@@ -141,14 +145,76 @@ class Model(object):
 #        self.scoring_fnc = make_scorer(self.getR2(y_test, y_train))
  
         # TODO: Create the grid search object
-        grid = GridSearchCV(self.regressor, self.params)     #score built into DecisionTreeRegressor
-#        grid = GridSearchCV(regressor, self.params, self.scoring_fnc)
+#        grid = GridSearchCV(self.regressor, self.params)     #score built into DecisionTreeRegressor
+        grid = GridSearchCV(self.regressor, self.params, scoring = make_scorer(r2_score))
 
         # Fit the grid search object to the data to compute the optimal model
         grid = grid.fit(self.X, self.y)
         # Return the optimal model after fitting the data
 #        return grid.best_estimator_
         self.best_est = grid.best_estimator_
+    def viewRegPlot(self):
+        ''' setup chart for plotting feature vs target variable '''
+        reg = LinearRegression()
+        # for feature in features: ...
+        feature = self.project.features[0]
+        feature_series = self.X[feature].reshape(-1,1)
+        reg.fit(feature_series, self.y)
+        # Visual aesthetics
+        plt.legend(loc = 'lower right')
+        plt.title("Regression Plot of {0} vs {1}".format(self.project.features[0], self.project.target))
+        plt.xlabel(feature)
+        plt.ylabel(self.project.target)
+#        plt.ylim([-0.05,1.05])
+        # Series plots
+        plt.plot(feature_series, reg.predict(feature_series), color='red', linewidth=1)
+        plt.scatter(feature_series, self.y, alpha=0.5, c=self.y)
+        plt.show()
+    def viewScatterPlots(self, newX, newY, color_xy='blue', color_newxy='red'):
+        ''' setup charts for plotting input features vs scatterplot of historical values '''
+        for i, feat in enumerate(self.X.keys()):
+            plt.scatter(self.X[feat], self.y, color=color_xy)
+            plt.scatter(newX[i], newY, color=color_newxy)
+            plt.xlabel('feature {}'.format(feat))
+            plt.show()
+    def viewRegPlots(self):
+        ''' setup charts for plotting features vs target variable '''
+        fig = plt.figure(figsize=(10,7))
+
+        # Create three different models based on max_depth
+        for k, feature in enumerate(self.project.features):
+            # Create a regression
+            reg = LinearRegression(self.X[feature])
+        
+            # Find the mean and standard deviation for smoothing
+            train_std = np.std(train_scores, axis = 1)
+            train_mean = np.mean(train_scores, axis = 1)
+            test_std = np.std(test_scores, axis = 1)
+            test_mean = np.mean(test_scores, axis = 1)
+
+            # Subplot the learning curve 
+            ax = fig.add_subplot(2, 2, k+1)
+            ax.plot(sizes, train_mean, 'o-', color = 'r', label = 'Training Score')
+            ax.plot(sizes, test_mean, 'o-', color = 'g', label = 'Testing Score')
+            ax.fill_between(sizes, train_mean - train_std, \
+                train_mean + train_std, alpha = 0.15, color = 'r')
+            ax.fill_between(sizes, test_mean - test_std, \
+                test_mean + test_std, alpha = 0.15, color = 'g')
+            # Labels
+            ax.set_title('max_depth = %s'%(depth))
+            ax.set_xlabel('Number of Training Points')
+            ax.set_ylabel('Score')
+            ax.set_xlim([0, X.shape[0]*0.8])
+            ax.set_ylim([-0.05, 1.05])
+        # Visual aesthetics
+        ax.legend(bbox_to_anchor=(1.05, 2.05), loc='lower left', borderaxespad = 0.)
+        fig.suptitle('Decision Tree Regressor Learning Performances', fontsize = 16, y = 1.03)
+        fig.set_tight_layout(tight=tight)
+        fig.show()
+
+
+###
+
         
 # TODO: Import 'make_scorer', 'DecisionTreeRegressor', and 'GridSearchCV'
 
