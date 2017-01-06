@@ -153,16 +153,21 @@ class Model(object):
         # Return the optimal model after fitting the data
 #        return grid.best_estimator_
         self.best_est = grid.best_estimator_
-    def viewRegPlot(self):
+    def viewRegPlot(self, feature=0, x=0, y=0, bbox={'facecolor':'red', 'alpha':0.5}, horiz='center', vert='center'):
         ''' setup chart for plotting feature vs target variable '''
         reg = LinearRegression()
         # for feature in features: ...
-        feature = self.project.features[0]
+        feature = self.project.features[feature]
         feature_series = self.X[feature].reshape(-1,1)
         reg.fit(feature_series, self.y)
+        coef    = reg.coef_[0] # with multiple regression model there are multiple coefficients
+        inter   = reg.intercept_
+        score   = reg.score(feature_series, self.y)
         # Visual aesthetics
         plt.legend(loc = 'lower right')
-        plt.title("Regression Plot of {0} vs {1}".format(self.project.features[0], self.project.target))
+        plt.title("Regression Plot of {0} vs {1}".format(feature, self.project.target))
+        plt.figtext(x, y, s = "coefficient: {0:,.0f}, intercept: {1:,.0f}, score: {2:,.2f}".format(coef, inter, score), bbox=bbox, horizontalalignment=horiz, verticalalignment=vert)
+#        plt.title("Regression Plot of {0} vs {1}; coefficient: {2:,.0f}, intercept: {3:,.0f}".format(self.project.features[0], self.project.target, coef, inter))
         plt.xlabel(feature)
         plt.ylabel(self.project.target)
 #        plt.ylim([-0.05,1.05])
