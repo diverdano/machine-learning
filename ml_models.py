@@ -173,7 +173,7 @@ class Model(object):
     def viewScatterPlots(self, newX, newY):
         ''' setup charts for plotting input features vs scatterplot of historical values '''
         for i, feat in enumerate(self.X.keys()):
-            plt.scatter(self.X[feat], self.y)
+            plt.scatter(self.X[feat], self.y, color='yellow')
             plt.scatter(newX[i], newY, color='red')
             plt.xlabel('feature {}'.format(feat))
             plt.show()
