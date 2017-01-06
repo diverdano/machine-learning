@@ -153,27 +153,31 @@ class Model(object):
         # Return the optimal model after fitting the data
 #        return grid.best_estimator_
         self.best_est = grid.best_estimator_
-    def viewRegPlot(self, feature=0, x=0, y=0, bbox={'facecolor':'red', 'alpha':0.5}, horiz='center', vert='center'):
+    def viewRegPlot(self, feature=0, color='yellow', alpha=0.4):
         ''' setup chart for plotting feature vs target variable '''
-        reg = LinearRegression()
         # for feature in features: ...
-        feature = self.project.features[feature]
-        feature_series = self.X[feature].reshape(-1,1)
+        feature         = self.project.features[feature]
+        feature_series  = self.X[feature].values.reshape(-1,1)
+        reg = LinearRegression()
         reg.fit(feature_series, self.y)
-        coef    = reg.coef_[0] # with multiple regression model there are multiple coefficients
-        inter   = reg.intercept_
-        score   = reg.score(feature_series, self.y)
-        # Visual aesthetics
-        plt.legend(loc = 'lower right')
-        plt.title("Regression Plot of {0} vs {1}".format(feature, self.project.target))
-        plt.figtext(x, y, s = "coefficient: {0:,.0f}, intercept: {1:,.0f}, score: {2:,.2f}".format(coef, inter, score), bbox=bbox, horizontalalignment=horiz, verticalalignment=vert)
-#        plt.title("Regression Plot of {0} vs {1}; coefficient: {2:,.0f}, intercept: {3:,.0f}".format(self.project.features[0], self.project.target, coef, inter))
+        coef            = reg.coef_[0] # with multiple regression model there are multiple coefficients
+        inter           = reg.intercept_
+        score           = reg.score(feature_series, self.y)
+        r_score         = "r-score: {0:.3f}".format(score)
+        title           = "Regression Plot of {0} vs {1}".format(feature, self.project.target)
+        reg_label       = "coefficient: {0:,.0f}, intercept: {1:,.0f}".format(coef, inter)
+        scatter_label   = "plot of {0} vs {1}".format(feature, self.project.target)
+        bbox            = {'facecolor':color, 'alpha':alpha}
+        # plot
+        plt.plot(feature_series, reg.predict(feature_series), color='red', linewidth=1, label=reg_label)
+        plt.scatter(feature_series, self.y, alpha=0.5, c=self.y, label=scatter_label)
+        # labels
+        plt.title(title)
         plt.xlabel(feature)
         plt.ylabel(self.project.target)
-#        plt.ylim([-0.05,1.05])
-        # Series plots
-        plt.plot(feature_series, reg.predict(feature_series), color='red', linewidth=1)
-        plt.scatter(feature_series, self.y, alpha=0.5, c=self.y)
+        plt.figtext(x=0.5, y=0.88, s = r_score, bbox=bbox, horizontalalignment='center', verticalalignment='top')
+        plt.figtext(x=0.5, y=0.12, s = reg_label, bbox=bbox, horizontalalignment='center', verticalalignment='bottom')
+#        plt.legend(loc = 'upper center')
         plt.show()
     def viewScatterPlots(self, newX, newY, color_xy='blue', color_newxy='red'):
         ''' setup charts for plotting input features vs scatterplot of historical values '''
@@ -182,39 +186,38 @@ class Model(object):
             plt.scatter(newX[i], newY, color=color_newxy)
             plt.xlabel('feature {}'.format(feat))
             plt.show()
-    def viewRegPlots(self):
+    def viewRegPlots(self, color='yellow', alpha=0.4):
         ''' setup charts for plotting features vs target variable '''
-        fig = plt.figure(figsize=(10,7))
+        fig = plt.figure(figsize=(16,10))
 
         # Create three different models based on max_depth
         for k, feature in enumerate(self.project.features):
-            # Create a regression
-            reg = LinearRegression(self.X[feature])
-        
-            # Find the mean and standard deviation for smoothing
-            train_std = np.std(train_scores, axis = 1)
-            train_mean = np.mean(train_scores, axis = 1)
-            test_std = np.std(test_scores, axis = 1)
-            test_mean = np.mean(test_scores, axis = 1)
-
-            # Subplot the learning curve 
+            #feature         = self.project.features[feature]   # redundant with enumerate
+            feature_series  = self.X[feature].values.reshape(-1,1)
+            reg = LinearRegression()
+            reg.fit(feature_series, self.y)
+            coef            = reg.coef_[0] # with multiple regression model there are multiple coefficients
+            inter           = reg.intercept_
+            score           = reg.score(feature_series, self.y)
+            r_score         = "r-square: {0:.3f}".format(score)
+            title           = "{0} given {1} (r-square: {2:.3f})".format(self.project.target, feature, score)
+            reg_label       = "coef: {0:,.0f}, intercept: {1:,.0f}".format(coef, inter)
+            scatter_label   = "plot of {0} given {1}".format(self.project.target, feature)
+            bbox            = {'facecolor':color, 'alpha':alpha}
+            # plot
             ax = fig.add_subplot(2, 2, k+1)
-            ax.plot(sizes, train_mean, 'o-', color = 'r', label = 'Training Score')
-            ax.plot(sizes, test_mean, 'o-', color = 'g', label = 'Testing Score')
-            ax.fill_between(sizes, train_mean - train_std, \
-                train_mean + train_std, alpha = 0.15, color = 'r')
-            ax.fill_between(sizes, test_mean - test_std, \
-                test_mean + test_std, alpha = 0.15, color = 'g')
-            # Labels
-            ax.set_title('max_depth = %s'%(depth))
-            ax.set_xlabel('Number of Training Points')
-            ax.set_ylabel('Score')
-            ax.set_xlim([0, X.shape[0]*0.8])
-            ax.set_ylim([-0.05, 1.05])
-        # Visual aesthetics
-        ax.legend(bbox_to_anchor=(1.05, 2.05), loc='lower left', borderaxespad = 0.)
-        fig.suptitle('Decision Tree Regressor Learning Performances', fontsize = 16, y = 1.03)
-        fig.set_tight_layout(tight=tight)
+            ax.plot(feature_series, reg.predict(feature_series), color='red', linewidth=1, label=reg_label)
+            ax.legend(loc='lower right', borderaxespad = 0.) # plot legend without the scatter plot
+            ax.scatter(feature_series, self.y, alpha=0.5, c=self.y, label=scatter_label)
+            # labels
+            ax.set_title(title)
+            ax.set_xlabel(feature)
+            ax.set_ylabel(self.project.target)
+#            ax.figtext(x=0.5, y=0.88, s = r_score, bbox=bbox, horizontalalignment='center', verticalalignment='top')
+#            ax.figtext(x=0.5, y=0.12, s = reg_label, bbox=bbox, horizontalalignment='center', verticalalignment='bottom')
+#        ax.legend(bbox_to_anchor=(1.05, 2.05), loc='lower right', borderaxespad = 0.)
+        fig.suptitle('Regression ScatterPlots', fontsize = 16, y = 1)
+        fig.set_tight_layout(tight='tight')
         fig.show()
 
 
