@@ -37,5 +37,12 @@
             "LSTAT",
             "PTRATIO"
         ]
+    },
+    "sleep_scores": {
+        "file": "projects/sleep/sleep.csv",
+        "target": "scores",
+        "features": [
+            "sleep"
+        ]
     }
 }

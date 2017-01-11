@@ -103,6 +103,9 @@ class ProjectData(object):
 client_data = [[5,17,15],[4,32,22],[8,3,12]]
 clients = np.transpose(client_data)
 
+sleep = [5,6,7,8,10]
+scores = [65,51,75,75,86]
+
 class Model(object):
     ''' base model object '''
     test_size       = 0.20
