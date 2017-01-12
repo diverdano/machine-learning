@@ -129,6 +129,7 @@ def computeLinearRegression(sleep,scores):
     m = slope
     b = -slope*avg_sleep + avg_scores
     #y = m * x + b
+    print("Your linear model is y={}*x+{}".format(m,b))
     return m,b
 
 def computePolynomialregression():
@@ -136,10 +137,6 @@ def computePolynomialregression():
     #y = p[0] * x**2 + p[1] * x + p[2]
     pass
 
-#if __name__=="__main__":
-def printLinearRegressionModel():
-    m,b = compute_regression(sleep,scores)
-    print("Your linear model is y={}*x+{}".format(m,b))
 
 class Model(object):
     ''' base model object '''
