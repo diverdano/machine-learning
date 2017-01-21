@@ -5,6 +5,7 @@
 import numpy as np
 import pandas as pd
 import simplejson as json
+import math
 
 # data prep
 from sklearn import model_selection
@@ -41,6 +42,57 @@ from sklearn.model_selection import learning_curve
 import matplotlib.pyplot as plt
 #from projects.boston_housing import visuals as vs
 #import visuals as vs
+
+# === data ===
+
+client_data = [[5,17,15],[4,32,22],[8,3,12]]
+clients = np.transpose(client_data)
+
+# === test functions ===
+
+def entropy(p1, p2):
+    '''calculate entropy for population of classification within an attribute'''
+    return (-p1 * math.log(p1,2) -p2 * math.log(p2,2))
+
+def computeLinearRegression(sleep,scores):
+    #	First, compute the average amount of each list
+    avg_sleep = np.average(sleep)
+    avg_scores = np.average(scores)
+
+    #	Then normalize the lists by subtracting the mean value from each entry
+    normalized_sleep = [i-avg_sleep for i in sleep]
+    normalized_scores = [i-avg_scores for i in scores]
+#     normalized_sleep = ['{:.2f}'.format(i-avg_sleep) for i in sleep]
+#     normalized_scores = ['{:.2f}'.format(i-avg_scores) for i in scores]
+    print(normalized_sleep)
+    print(normalized_scores)
+
+    #	Compute the slope of the line by taking the sum over each student
+    #	of the product of their normalized sleep times their normalized test score.
+    #	Then divide this by the sum of squares of the normalized sleep times.
+    slope = sum([x*y for x,y in zip(normalized_sleep,normalized_scores)]) / sum([np.square(y) for y in normalized_sleep])# = 0
+    print(slope)
+    #	Finally, We have a linear function of the form
+    #	y - avg_y = slope * ( x - avg_x )
+    #	Rewrite this function in the form
+    #	y = m * x + b
+    #	Then return the values m, b
+    m = slope
+    b = -slope*avg_sleep + avg_scores
+    #y = m * x + b
+    return m,b
+
+def computePolynomialregression():
+    # polynomial regression
+    #y = p[0] * x**2 + p[1] * x + p[2]
+    pass
+
+#if __name__=="__main__":
+def printLinearRegressionModel():
+    m,b = compute_regression(sleep,scores)
+    print("Your linear model is y={}*x+{}".format(m,b))
+
+
 
 # === model object ===
 
@@ -99,47 +151,6 @@ class ProjectData(object):
 #         if 'drop' in self.projects[self.desc]:                    if need to drop columns...
 #             self.feature_data = self.feature_data.drop(self.)
 #       once dataframe is created: df._get_numeric_data() to limit to numeric data only
-
-client_data = [[5,17,15],[4,32,22],[8,3,12]]
-clients = np.transpose(client_data)
-
-def computeLinearRegression(sleep,scores):
-    #	First, compute the average amount of each list
-    avg_sleep = np.average(sleep)
-    avg_scores = np.average(scores)
-
-    #	Then normalize the lists by subtracting the mean value from each entry
-    normalized_sleep = [i-avg_sleep for i in sleep]
-    normalized_scores = [i-avg_scores for i in scores]
-#     normalized_sleep = ['{:.2f}'.format(i-avg_sleep) for i in sleep]
-#     normalized_scores = ['{:.2f}'.format(i-avg_scores) for i in scores]
-    print(normalized_sleep)
-    print(normalized_scores)
-
-    #	Compute the slope of the line by taking the sum over each student
-    #	of the product of their normalized sleep times their normalized test score.
-    #	Then divide this by the sum of squares of the normalized sleep times.
-    slope = sum([x*y for x,y in zip(normalized_sleep,normalized_scores)]) / sum([np.square(y) for y in normalized_sleep])# = 0
-    print(slope)
-    #	Finally, We have a linear function of the form
-    #	y - avg_y = slope * ( x - avg_x )
-    #	Rewrite this function in the form
-    #	y = m * x + b
-    #	Then return the values m, b
-    m = slope
-    b = -slope*avg_sleep + avg_scores
-    #y = m * x + b
-    return m,b
-
-def computePolynomialregression():
-    # polynomial regression
-    #y = p[0] * x**2 + p[1] * x + p[2]
-    pass
-
-#if __name__=="__main__":
-def printLinearRegressionModel():
-    m,b = compute_regression(sleep,scores)
-    print("Your linear model is y={}*x+{}".format(m,b))
 
 class Model(object):
     ''' base model object '''
@@ -259,36 +270,6 @@ class Model(object):
         fig.show()
 
 
-###
-
-        
-# TODO: Import 'make_scorer', 'DecisionTreeRegressor', and 'GridSearchCV'
-
-# def fit_model(X, y):
-#     """ Performs grid search over the 'max_depth' parameter for a 
-#         decision tree regressor trained on the input data [X, y]. """
-#     
-#     # Create cross-validation sets from the training data
-#     cv_sets = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.20, random_state = 0)
-# 
-#     # TODO: Create a decision tree regressor object
-#     regressor = None
-# 
-#     # TODO: Create a dictionary for the parameter 'max_depth' with a range from 1 to 10
-#     params = {}
-# 
-#     # TODO: Transform 'performance_metric' into a scoring function using 'make_scorer' 
-#     scoring_fnc = None
-# 
-#     # TODO: Create the grid search object
-#     grid = None
-# 
-#     # Fit the grid search object to the data to compute the optimal model
-#     grid = grid.fit(X, y)
-# 
-#     # Return the optimal model after fitting the data
-#     return grid.best_estimator_
-
 # === transform data ===
 
 def splitTrainDataReg(x,y,test_size=0.25, random_state=0, model='Decision Tree'):
@@ -347,14 +328,6 @@ def splitTrainData(x,y,test_size=0.25, random_state=0, model='Decision Tree'):
         '\n\tRecall:'.ljust(14)     + '{:.2f}'.format(recall) +
         '\n\tConfusion matrix: \n')
     print(confusion)
-
-# results = {
-#   "Naive Bayes Recall": g_recall,
-#   "Naive Bayes Precision": g_precision,
-#   "Decision Tree Recall": dt_recall,
-#   "Decision Tree Precision": dt_precision
-# }
-
     return {    'model'             : model,
                 'accuracy'          : accuracy,
                 'confusion'         : confusion,
@@ -364,7 +337,6 @@ def splitTrainData(x,y,test_size=0.25, random_state=0, model='Decision Tree'):
                 'features_test'     : Xt,
                 'labels_train'      : Ytr,
                 'labels_test'       : Yt}
-
 
 #def plotData(data, title=None, xlabel=None, ylabel=None, grid=True, legend=True):
 def plotData(plot_series, title=None, xlabel=None, ylabel=None, grid=True, legend=True):
@@ -479,55 +451,30 @@ def plot_DTReg():
     estimator = DecisionTreeRegressor()
     plot_learning_curve(estimator, title, X, y, (-0.1, 1.1), cv=cv, scoring=score, n_jobs=4)
     plt.show()
-    
-    
-#     def plot_curve():
-#         # YOUR CODE HERE
-#         reg = DecisionTreeRegressor()
-#         reg.fit(X,y)
-#         print(reg.score(X,y))
-# 
-#         # TODO: Create the learning curve with the cv and score parameters defined above.
-#     
-#         # TODO: Plot the training and testing curves.
-# 
-#         # Show the result, scaling the axis for visibility
-#         plt.ylim(-.1,1.1)
-#         plt.show()
-
 
 ## === functions from boston_housing ProjectData
 
 def ModelLearning(X, y, tight={'rect':(0,0,0.75,1)}):
     """ Calculates the performance of several models with varying sizes of training data.
         The learning and testing scores for each model are then plotted. """
-    
     # Create 10 cross-validation sets for training and testing
-#    cv = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.2, random_state = 0)
     cv = ShuffleSplit(n_splits = 10, test_size = 0.2, random_state = 0)
-
     # Generate the training set sizes increasing by 50
     train_sizes = np.rint(np.linspace(1, X.shape[0]*0.8 - 1, 9)).astype(int)
-
     # Create the figure window
     fig = plt.figure(figsize=(10,7))
-
     # Create three different models based on max_depth
     for k, depth in enumerate([1,3,6,10]):
-        
         # Create a Decision tree regressor at max_depth = depth
         regressor = DecisionTreeRegressor(max_depth = depth)
-
         # Calculate the training and testing scores
         sizes, train_scores, test_scores = curves.learning_curve(regressor, X, y, \
             cv = cv, train_sizes = train_sizes, scoring = 'r2')
-        
         # Find the mean and standard deviation for smoothing
         train_std = np.std(train_scores, axis = 1)
         train_mean = np.mean(train_scores, axis = 1)
         test_std = np.std(test_scores, axis = 1)
         test_mean = np.mean(test_scores, axis = 1)
-
         # Subplot the learning curve 
         ax = fig.add_subplot(2, 2, k+1)
         ax.plot(sizes, train_mean, 'o-', color = 'r', label = 'Training Score')
@@ -536,16 +483,13 @@ def ModelLearning(X, y, tight={'rect':(0,0,0.75,1)}):
             train_mean + train_std, alpha = 0.15, color = 'r')
         ax.fill_between(sizes, test_mean - test_std, \
             test_mean + test_std, alpha = 0.15, color = 'g')
-        
         # Labels
         ax.set_title('max_depth = %s'%(depth))
         ax.set_xlabel('Number of Training Points')
         ax.set_ylabel('Score')
         ax.set_xlim([0, X.shape[0]*0.8])
         ax.set_ylim([-0.05, 1.05])
-    
     # Visual aesthetics
-#    ax.legend()
     ax.legend(bbox_to_anchor=(1.05, 2.05), loc='lower left', borderaxespad = 0.)
     fig.suptitle('Decision Tree Regressor Learning Performances', fontsize = 16, y = 1.03)
 #     tight = {
@@ -558,7 +502,6 @@ def ModelLearning(X, y, tight={'rect':(0,0,0.75,1)}):
     fig.show()
 #    plt.set_tight_layout()
 #    plt.show()
-
 
 def ModelComplexity(X, y):
     """ Calculates the performance of the model as model complexity increases.
@@ -601,24 +544,18 @@ def ModelComplexity(X, y):
 
 def PredictTrials(X, y, fitter, data):
     """ Performs trials of fitting and predicting data. """
-
     # Store the predicted prices
     prices = []
-
     for k in range(10):
         # Split the data
         X_train, X_test, y_train, y_test = train_test_split(X, y, \
             test_size = 0.2, random_state = k)
-        
         # Fit the data
         reg = fitter(X_train, y_train)
-        
         # Make a prediction
         pred = reg.predict([data[0]])[0]
         prices.append(pred)
-        
         # Result
         print("Trial {}: ${:,.2f}".format(k+1, pred))
-
     # Display price range
     print("\nRange in prices: ${:,.2f}".format(max(prices) - min(prices)))
