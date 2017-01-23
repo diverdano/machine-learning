@@ -45,34 +45,23 @@ class Perceptron(object):
         """Takes in @param inputs, a list of numbers equal to length of weights. @return the output of a threshold perceptron with given inputs based on perceptron weights and threshold.""" 
         strength = np.dot(inputs,self.weights)
         self.last_input = strength
-        return int(strength > self.threshold)
+        return int(strength > self.threshold)       # perceptron activates with a boolean function
     def update(self, values, train, eta=.1):
         """Takes in a 2D array @param values consisting of a LIST of inputs and a 1D array @param train, consisting of a corresponding list of expected outputs.
         Updates internal weights according to the perceptron training rule using these values and an optional learning rate, @param eta."""
-        for i, iteration in enumerate(train):   # remember inputs is a list, output is scalar
-            prediction = self.activate(values[i])        # obtain prediction
+        for i, iteration in enumerate(train):       # remember inputs is a list, output is scalar
+            prediction = self.activate(values[i])   # obtain prediction
             error = train[i] - prediction
             for j, weight in enumerate(self.weights):
                 self.weights[j] += eta * error * values[i][j]
 
 class Sigmoid(Perceptron):
-    """This class models an artificial neuron with sigmoid activation function."""
-#     def __init__(self, weights = np.array([1])):
-#         """Initialize weights based on input arguments. Note that no type-checking is being performed here for simplicity of code."""
-#         self.weights = weights.astype(float)
-#         # NOTE: You do not need to worry about these two attribues for this programming quiz, but these will be useful for if you want to create a network out of these sigmoid units!
-#         self.last_input = 0 # strength of last input
-#         self.delta      = 0 # error signal
+    """This class models an artificial neuron with sigmoid activation and update functions."""
     def activate(self, values):
         """Takes in @param values, a list of numbers equal to length of weights. @return the output of a sigmoid unit with given inputs based on unit weights."""
-        # YOUR CODE HERE
-        # First calculate the strength of the input signal.
         strength = np.dot(values, self.weights)
         self.last_input = strength
-        # TODO: Modify strength using the sigmoid activation function and return as output signal.
-        # HINT: You may want to create a helper function to compute the logistic function since you will need it for the update function.
-        result = logistic(strength)
-        return result
+        return logistic(strength)                 # sigmoid activates with a continuous function
     def update(self, values, train, eta=.1):
         """Takes in a 2D array @param values consisting of a LIST of inputs and a 1D array @param train, consisting of a corresponding list of expected outputs.
         Updates internal weights according to gradient descent using these values and an optional learning rate, @param eta."""
@@ -81,18 +70,6 @@ class Sigmoid(Perceptron):
             error = train[i] - prediction
             for j, weight in enumerate(self.weights):
                 self.weights[j] += eta * error * values[i][j] * prediction * (1 - prediction)         # suggestion of forum poster, dropping the minus sign
-#                self.weights[j] += -eta * error * values[i][j] * prediction * (1 - prediction)         # suggestion of forum poster
-#                self.weights[j] += eta * error * logistic_derivative(values[i][j])                     # replace value with derivative of activation rule
-#                self.weights[j] += eta * error * logistic_derivative(values[i][j]) * values[i][j]      # chain rule, add derivative of activation rule
-#                self.weights[j] += -eta * error * logistic_derivative(values[i][j]) * values[i][j]     # *-1 (negative) 
-#                self.weights[j] += eta * error * values[i][j]                                          # perceptron update rule
-#         for X, y_true in zip(values, train):
-#             # obtain the output signal for that point
-#             y_pred = self.activate(X)
-#             # YOUR CODE HERE
-#             # TODO: compute derivative of logistic function at input strength
-#             # Recall: d/dx logistic(x) = logistic(x)*(1-logistic(x))
-#             # TODO: update self.weights based on learning rate, signal accuracy, function slope (derivative) and input value
 
 class NeuralNetwork(object):
     def __init__(self, layers, activation='tanh'):
