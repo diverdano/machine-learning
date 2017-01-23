@@ -1,23 +1,25 @@
 #!usr/bin/python
 
 # === load libraries ===
+
 # key libraries
 import numpy as np
 import pandas as pd
 import simplejson as json
 import math
+import random
 
 # data prep
 from sklearn import model_selection
 from sklearn.model_selection import KFold
 from sklearn.model_selection import ShuffleSplit
-import sklearn.model_selection as curves
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import learning_curve
+import sklearn.model_selection as curves
 
 # data sets
 from sklearn.datasets import load_linnerud      # linear regression data set
 from sklearn.datasets import load_digits
-
 
 # models
 from sklearn.tree import DecisionTreeClassifier
@@ -38,10 +40,10 @@ from sklearn.metrics import r2_score
 from sklearn.metrics import explained_variance_score, make_scorer
 
 # plot
-from sklearn.model_selection import learning_curve
 import matplotlib.pyplot as plt
 #from projects.boston_housing import visuals as vs
 #import visuals as vs
+#import pylab as pl ### not needed...?
 
 # === data ===
 
@@ -92,8 +94,6 @@ def printLinearRegressionModel():
     m,b = compute_regression(sleep,scores)
     print("Your linear model is y={}*x+{}".format(m,b))
 
-
-
 # === model object ===
 
 class ProjectData(object):
@@ -104,8 +104,9 @@ class ProjectData(object):
         try:
             self.loadProjects()
             if project in self.projects.keys():
-                if project == 'reg'     : self.loadRegSample()
-                elif project == 'lc'    : self.loadLearningCurveSample()
+                if   project == 'reg'       : self.loadRegSample()
+                elif project == 'lc'        : self.loadLearningCurveSample()
+                elif project == 'terrain'   : self.makeTerrainData()
                 else:
                     self.desc       = project # if exists project in self.projects ...
                     self.file       = self.projects[self.desc]['file']
@@ -138,7 +139,6 @@ class ProjectData(object):
     def loadRegSample(self):
         ''' load regression sample dataset '''
         self.data           = load_linnerud()
-#        self.X, self.y     = self.data.???, self.data.???    setup as dataframe
         print(self.data.DESCR)
     def loadLearningCurveSample(self):
         ''' load learning curve sample dataset '''
@@ -151,6 +151,38 @@ class ProjectData(object):
 #         if 'drop' in self.projects[self.desc]:                    if need to drop columns...
 #             self.feature_data = self.feature_data.drop(self.)
 #       once dataframe is created: df._get_numeric_data() to limit to numeric data only
+    def makeTerrainData(self, n_points=1000):
+    ###############################################################################
+    ### make the toy dataset
+        self.data = {}
+        random.seed(42)
+        grade = [random.random() for ii in range(0,n_points)]
+        bumpy = [random.random() for ii in range(0,n_points)]
+        error = [random.random() for ii in range(0,n_points)]
+        y = [round(grade[ii]*bumpy[ii]+0.3+0.1*error[ii]) for ii in range(0,n_points)]
+        for ii in range(0, len(y)):
+            if grade[ii]>0.8 or bumpy[ii]>0.8:
+                y[ii] = 1.0
+    ### split into train/test sets
+        X = [[gg, ss] for gg, ss in zip(grade, bumpy)]
+        split = int(0.75*n_points)
+        self.data['X_train'] = X[0:split]
+        self.data['X_test']  = X[split:]
+        self.data['y_train'] = y[0:split]
+        self.data['y_test']  = y[split:]
+#         grade_sig = [self.data['X_train'][ii][0] for ii in range(0, len(self.data['X_train'])) if self.data['y_train'][ii]==0]
+#         bumpy_sig = [self.data['X_train'][ii][1] for ii in range(0, len(self.data['X_train'])) if self.data['y_train'][ii]==0]
+#         grade_bkg = [self.data['X_train'][ii][0] for ii in range(0, len(self.data['X_train'])) if self.data['y_train'][ii]==1]
+#         bumpy_bkg = [self.data['X_train'][ii][1] for ii in range(0, len(self.data['X_train'])) if self.data['y_train'][ii]==1]
+# #         training_data = {"fast":{"grade":grade_sig, "bumpiness":bumpy_sig}
+# #                 , "slow":{"grade":grade_bkg, "bumpiness":bumpy_bkg}}
+#         grade_sig = [self.data['X_test'][ii][0] for ii in range(0, len(self.data['X_test'])) if self.data['y_test'][ii]==0]
+#         bumpy_sig = [self.data['X_test'][ii][1] for ii in range(0, len(self.data['X_test'])) if self.data['y_test'][ii]==0]
+#         grade_bkg = [self.data['X_test'][ii][0] for ii in range(0, len(self.data['X_test'])) if self.data['y_test'][ii]==1]
+#         bumpy_bkg = [self.data['X_test'][ii][1] for ii in range(0, len(self.data['X_test'])) if self.data['y_test'][ii]==1]
+# #         test_data = {"fast":{"grade":grade_sig, "bumpiness":bumpy_sig}
+# #                 , "slow":{"grade":grade_bkg, "bumpiness":bumpy_bkg}}
+# #         return X_train, y_train, X_test, y_test
 
 class Model(object):
     ''' base model object '''
@@ -165,15 +197,10 @@ class Model(object):
         self.fit_model()
     def splitTrainTest(self):
         ''' use cross validation to split data into training and test datasets '''
-#         self.test_size      = test_size
-#         self.random_state   = random_state
         self.Xtr, self.Xt, self.Ytr, self.Yt = model_selection.train_test_split(self.X, self.y, test_size=self.test_size, random_state=self.random_state)
     def shuffleSplit(self):     # done inside of fit_model
         ''' use cross validation/shuffle to split data into training and test datasets '''
-#        self.cv_sets = ShuffleSplit(self.X.shape[0], n_iter = 10, test_size = 0.20, random_state = 0)
         self.cv_sets = ShuffleSplit(n_splits=self.n_splits, test_size=self.test_size, random_state=self.random_state)
-#        self.ss_test, self.ss_train = self.cv_sets.split(self.X, self.y)
-#        self.Xtr, self.Xt, Self.Ytr, self.Yt = self.cv_sets.split(self.X, self.y)
     def getR2(self, y_true, y_predict):
         ''' calculate performance (aka coefficient of determination, goodness of fit) '''
         r2_score   = r2_score(y_true, y_predict)
@@ -182,29 +209,16 @@ class Model(object):
         """ Performs grid search over the 'max_depth' parameter for a 
             decision tree regressor trained on the input data [X, y]. """
 #     # Create cross-validation sets from the training data
-#        self.cv_sets = ShuffleSplit(self.X.shape[0], n_iter = 10, test_size = 0.20, random_state = 0)
         self.cv_sets = ShuffleSplit(n_splits=self.n_splits, test_size=self.test_size, random_state=self.random_state)
-        # TODO: Create a decision tree regressor object
         self.regressor = DecisionTreeRegressor()
-
-        # TODO: Create a dictionary for the parameter 'max_depth' with a range from 1 to 10
-#        self.params = {'max_depth':list(range(1,10))}      # set within class
-
-        # TODO: Transform 'performance_metric' into a scoring function using 'make_scorer' 
-#        self.scoring_fnc = make_scorer(self.getR2(y_test, y_train))
- 
         # TODO: Create the grid search object
-#        grid = GridSearchCV(self.regressor, self.params)     #score built into DecisionTreeRegressor
         grid = GridSearchCV(self.regressor, self.params, scoring = make_scorer(r2_score))
-
         # Fit the grid search object to the data to compute the optimal model
         grid = grid.fit(self.X, self.y)
         # Return the optimal model after fitting the data
-#        return grid.best_estimator_
         self.best_est = grid.best_estimator_
     def viewRegPlot(self, feature=0, color='yellow', alpha=0.4):
         ''' setup chart for plotting feature vs target variable '''
-        # for feature in features: ...
         feature         = self.project.features[feature]
         feature_series  = self.X[feature].values.reshape(-1,1)
         reg = LinearRegression()
@@ -238,10 +252,8 @@ class Model(object):
     def viewRegPlots(self, color='yellow', alpha=0.4):
         ''' setup charts for plotting features vs target variable '''
         fig = plt.figure(figsize=(16,10))
-
         # Create three different models based on max_depth
         for k, feature in enumerate(self.project.features):
-            #feature         = self.project.features[feature]   # redundant with enumerate
             feature_series  = self.X[feature].values.reshape(-1,1)
             reg = LinearRegression()
             reg.fit(feature_series, self.y)
@@ -268,7 +280,6 @@ class Model(object):
         fig.suptitle('Regression ScatterPlots', fontsize = 16, y = 1)
         fig.set_tight_layout(tight='tight')
         fig.show()
-
 
 # === transform data ===
 

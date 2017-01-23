@@ -44,5 +44,8 @@
         "features": [
             "sleep"
         ]
+    },
+    "terrain": {
     }
+
 }
