@@ -1,4 +1,23 @@
 {
+    "student":{
+        "file": "projects/student_intervention/student-data.csv",
+        "target": "passed",
+        "features": [
+            "age",
+            "Medu",
+            "Fedu",
+            "traveltime",
+            "studytime",
+            "failures",
+            "famrel",
+            "freetime",
+            "goout",
+            "Dalc",
+            "Walc",
+            "health",
+            "absences"
+        ]
+    },
     "reg":{
         "target": "",
         "data": ""

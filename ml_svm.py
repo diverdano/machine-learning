@@ -4,8 +4,9 @@
 # key libraries
 # import sys
 import numpy as np
+import pandas as pd
 import random
-# import pylab as pl
+import simplejson as json
 # import copy
 # import base64
 # import subprocess
@@ -15,12 +16,15 @@ import random
 
 # models
 from sklearn import svm
+from sklearn.naive_bayes import GaussianNB
+import nltk
 
 # metrics
 from sklearn.metrics import accuracy_score
 
 # plot
 import matplotlib.pyplot as plt
+import pylab as pl
 
 # === data ===
 
@@ -31,33 +35,27 @@ import matplotlib.pyplot as plt
 def prettyPicture(clf, X_test, y_test):
     x_min = 0.0; x_max = 1.0
     y_min = 0.0; y_max = 1.0
-
-    # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, m_max]x[y_min, y_max].
+    # Plot the decision boundary. For that, we will assign a color to each point in the mesh [x_min, m_max]x[y_min, y_max].
     h = .01  # step size in the mesh
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
-
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
     plt.xlim(xx.min(), xx.max())
     plt.ylim(yy.min(), yy.max())
-
     plt.pcolormesh(xx, yy, Z, cmap=pl.cm.seismic)
-
     # Plot also the test points
     grade_sig = [X_test[ii][0] for ii in range(0, len(X_test)) if y_test[ii]==0]
     bumpy_sig = [X_test[ii][1] for ii in range(0, len(X_test)) if y_test[ii]==0]
     grade_bkg = [X_test[ii][0] for ii in range(0, len(X_test)) if y_test[ii]==1]
     bumpy_bkg = [X_test[ii][1] for ii in range(0, len(X_test)) if y_test[ii]==1]
-
     plt.scatter(grade_sig, bumpy_sig, color = "b", label="fast")
     plt.scatter(grade_bkg, bumpy_bkg, color = "r", label="slow")
     plt.legend()
     plt.xlabel("bumpiness")
     plt.ylabel("grade")
-
-    plt.savefig("test.png")
+    plt.show()
+#    plt.savefig("test.png")
 
 def output_image(name, format, bytes):
     image_start = "BEGIN_IMAGE_f9825uweof8jw9fj4r8"
@@ -138,39 +136,42 @@ class ProjectData(object):
     ### split into train/test sets
         X = [[gg, ss] for gg, ss in zip(grade, bumpy)]
         split = int(0.75*n_points)
-        self.data['X_train'] = X[0:split]
-        self.data['X_test']  = X[split:]
-        self.data['y_train'] = y[0:split]
-        self.data['y_test']  = y[split:]
-#         grade_sig = [self.data['X_train'][ii][0] for ii in range(0, len(self.data['X_train'])) if self.data['y_train'][ii]==0]
-#         bumpy_sig = [self.data['X_train'][ii][1] for ii in range(0, len(self.data['X_train'])) if self.data['y_train'][ii]==0]
-#         grade_bkg = [self.data['X_train'][ii][0] for ii in range(0, len(self.data['X_train'])) if self.data['y_train'][ii]==1]
-#         bumpy_bkg = [self.data['X_train'][ii][1] for ii in range(0, len(self.data['X_train'])) if self.data['y_train'][ii]==1]
-# #         training_data = {"fast":{"grade":grade_sig, "bumpiness":bumpy_sig}
-# #                 , "slow":{"grade":grade_bkg, "bumpiness":bumpy_bkg}}
-#         grade_sig = [self.data['X_test'][ii][0] for ii in range(0, len(self.data['X_test'])) if self.data['y_test'][ii]==0]
-#         bumpy_sig = [self.data['X_test'][ii][1] for ii in range(0, len(self.data['X_test'])) if self.data['y_test'][ii]==0]
-#         grade_bkg = [self.data['X_test'][ii][0] for ii in range(0, len(self.data['X_test'])) if self.data['y_test'][ii]==1]
-#         bumpy_bkg = [self.data['X_test'][ii][1] for ii in range(0, len(self.data['X_test'])) if self.data['y_test'][ii]==1]
-# #         test_data = {"fast":{"grade":grade_sig, "bumpiness":bumpy_sig}
-# #                 , "slow":{"grade":grade_bkg, "bumpiness":bumpy_bkg}}
-# #         return X_train, y_train, X_test, y_test
+        self.X_train = X[0:split]
+        self.X_test  = X[split:]
+        self.y_train = y[0:split]
+        self.y_test  = y[split:]
 
 # === model object ===
 
 class Model(object):
-    def __init__(self, X = [[0, 0], [1, 1]], y = [0, 1]):
-        self.X_train = X
-        self.y_train = y
-#        self.clf = svm.SVC()
-        self.clf = svm.SVC(kernel='linear')
-        self.clf.fit(self.X_train, self.y_train)  
-    def predict(self, X_test = [[2., 2.]], y_test = [[]]):
-        self.X_test = X_test
-        self.pred = self.clf.predict(self.X_test)
-    def getAccuracy(self, y_test = [[]]):
-        self.y_test = y_test
-        self.accuracy = accuracy_score(self.pred, self.y_test)
+#     kernel      = 'linear'
+#     C           = 1
+#     gamma       = 0.1
+    accuracy    = None
+    def __init__(self, project, kernel='linear', C=1, gamma=0.1):
+        self.project    = ProjectData(project)
+        self.kernel = kernel
+        self.C      = C
+        self.gamma  = gamma
+        self.createClassifier()
+        self.fitData()
+        self.predict()
+        self.getAccuracy()
+    def __repr__(self):
+        return str({'accuracy':format(self.accuracy,'0.3'), 'params':self.clf.get_params()})
+    def createClassifier(self):
+        self.clf = svm.SVC(kernel=self.kernel, C=self.C, gamma=self.gamma)
+        return self.clf.get_params()
+    def fitData(self):
+        self.clf.fit(self.project.X_train, self.project.y_train)
+    def plotData(self):
+        '''callout to plot function'''
+        prettyPicture(self.clf, self.project.X_test, self.project.y_test)
+    def predict(self):
+        self.pred = self.clf.predict(self.project.X_test)
+    def getAccuracy(self):
+        self.accuracy = accuracy_score(self.pred, self.project.y_test)
+        return self.__repr__()
     def get_support_vectors(self):
         clf.support_vectors_
         # get indices of support vectors
@@ -178,3 +179,8 @@ class Model(object):
         # get number of support vectors for each class
         clf.n_support_ 
 
+class ModelNB(Model):
+    '''inherit from model, override create classifier with NB based'''
+    def createClassifier(self):
+        self.clf = GaussianNB()
+    
