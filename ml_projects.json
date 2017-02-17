@@ -1,4 +1,10 @@
 {
+    "credit_unions":{
+        "file": "/Users/dan//Documents/dan/consulting/lists/call-report-data-2016-09/Credit Union Branch Information.txt"
+    },
+    "credit_union_accounts":{
+        "file": "/Users/dan//Documents/dan/consulting/lists/call-report-data-2016-09/fs220.txt"
+    },
     "student":{
         "file": "projects/student_intervention/student-data.csv",
         "target": "passed",
