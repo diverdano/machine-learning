@@ -41,6 +41,7 @@ from sklearn.metrics import explained_variance_score, make_scorer
 
 # plot
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 #from projects.boston_housing import visuals as vs
 #import visuals as vs
 #import pylab as pl ### not needed...?

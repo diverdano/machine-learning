@@ -82,6 +82,7 @@ class BankData(object):
     site        = 'Charter'
     main        = 'Bank Location'
     assets      = "Consol Assets (Mil $)"
+    dom_assets  = "Domestic Assets (Mil $)"
     branches    = "Domestic Branches"
     def __init__(self, banks):
         self.banks          = ProjectData(banks).data[[self.number, self.name, self.site, self.main, self.branches, self.assets]]
