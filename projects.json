@@ -1,14 +1,14 @@
 {
     "credit_unions":{
-        "file": "/Users/dan//Documents/dan/consulting/lists/call-report-data-2016-09/Credit Union Branch Information.txt",
+        "file": "/Users/dan/dev/data/cr_unions/Credit Union Branch Information.txt",
         "type": "csv"
     },
     "cu_accounts":{
-        "file": "/Users/dan//Documents/dan/consulting/lists/call-report-data-2016-09/fs220.txt",
+        "file": "/Users/dan/dev/data/cr_unions/fs220.txt",
         "type": "csv"
     },
     "banks":{
-        "file": "/Users/dan//Documents/dan/consulting/lists/banks-300m-aum-2016-06.txt",
+        "file": "/Users/dan/dev/data/banks-300m-aum-2016-06.txt",
         "type": "tab"
     }
 }
