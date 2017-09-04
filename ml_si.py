@@ -12,17 +12,45 @@ from time import time
 from sklearn import model_selection
 
 # models
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
+# ensemble: bagging, adaboost, random forest, gradient boosting
+# KNeighbors
+# stochastic gradient descent
+from sklearn.svm import SVC
+# logistic regression
+# --not in sk learn? -- neural networks
+
 
 # metrics
 from sklearn.metrics import f1_score
 
 # plot
+import matplotlib.pyplot as plt
 
 # === data ===
 def loadStudentData(file):
     return pd.read_csv(file)
 
 # === test functions ===
+
+# === plot ===
+def plotCorr(data):
+    '''plot correlation matrix for data (pandas DataFrame), exludes non-numeric attributes'''
+    correlations    = data.corr()
+    names           = list(correlations.columns)
+    # plot correlation matrix
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    cax = ax.matshow(correlations, vmin=-1, vmax=1)
+    fig.colorbar(cax)
+    ticks = np.arange(0,len(names),1)
+    ax.set_xticks(ticks)
+    ax.set_yticks(ticks)
+    ax.set_xticklabels(names)
+    ax.set_yticklabels(names)
+    plt.show()
+
 
 # === model object ===
 
@@ -106,8 +134,8 @@ class StudentData(object):
         print("\t{}\tstudents passed".format(self.n_passed))
         print("\t{}\tstudents failed".format(self.n_failed))
         print("\t{:.2%}\tgraduation rate".format(self.grad_rate))
-        print("\n\ttarget attribute:\n\t\t'{}'".format(self.y.name))
-        print("\n\tfeatures:")
+        print("\ntarget attribute:\n\t'{}'".format(self.y.name))
+        print("\nfeatures:")
         for index, item in enumerate(sorted(self.X.columns)): print("\t{}\t'{}'".format(index + 1, item))
     def preprocessData(self):
         ''' transpose objects to numerical data -> binary where appropriate '''
@@ -127,3 +155,29 @@ class StudentData(object):
     def splitTrainTest(self):
         ''' use cross validation to split data into training and test datasets '''
         self.Xtr, self.Xt, self.Ytr, self.Yt = model_selection.train_test_split(self.X, self.y, test_size=self.test_size, random_state=self.random_state)
+
+# === model ===
+def StudentModel(object):
+    '''model wrapper for StudentData'''
+    def __init__(self, project):
+        pass
+
+    # TODO: Initialize the three models
+    clf_A = DecisionTreeClassifier()
+    clf_B = GaussianNB()
+    clf_C = SVC()
+
+    # TODO: Set up the training set sizes
+    # ? use model_selection.train_test_split??
+#    self.Xtr, self.Xt, self.Ytr, self.Yt = model_selection.train_test_split(self.X, self.y, test_size=self.test_size, random_state=self.random_state)
+    X_train_100 = None
+    y_train_100 = None
+
+    X_train_200 = None
+    y_train_200 = None
+
+    X_train_300 = None
+    y_train_300 = None
+
+# TODO: Execute the 'train_predict' function for each classifier and each training set size
+# train_predict(clf, X_train, y_train, X_test, y_test)
