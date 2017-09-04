@@ -12,7 +12,6 @@ from time import time
 from sklearn import model_selection     # for train_test_split
 
 # models
-<<<<<<< HEAD
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 # ensemble: bagging, adaboost, random forest, gradient boosting
@@ -22,7 +21,6 @@ from sklearn.svm import SVC
 # logistic regression
 # --not in sk learn? -- neural networks
 
-=======
 '''
 Gaussian Naive Bayes (GaussianNB)
 Decision Trees
@@ -42,7 +40,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier # need gradient boosting
 from sklearn.linear_model import LogisticRegression
->>>>>>> 272888ceca06c86faa61acfc25ea202da14925ad
 
 # metrics
 import sklearn.metrics
@@ -50,10 +47,7 @@ import sklearn.metrics
 
 # plot
 import matplotlib.pyplot as plt
-<<<<<<< HEAD
-=======
 import matplotlib.cm as cm
->>>>>>> 272888ceca06c86faa61acfc25ea202da14925ad
 
 # === data ===
 def loadStudentData(file):
@@ -61,7 +55,6 @@ def loadStudentData(file):
 
 # === test functions ===
 
-<<<<<<< HEAD
 # === plot ===
 def plotCorr(data):
     '''plot correlation matrix for data (pandas DataFrame), exludes non-numeric attributes'''
@@ -80,7 +73,6 @@ def plotCorr(data):
     plt.show()
 
 
-=======
 # === plot function ===
 def correlation_matrix(df):
     fig = plt.figure()
@@ -104,7 +96,6 @@ def correlation_matrix(df):
     fig.colorbar(cax, ticks=[-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1])
     plt.show()
 
->>>>>>> 272888ceca06c86faa61acfc25ea202da14925ad
 # === model object ===
 
 class ProjectData(object):
@@ -217,7 +208,6 @@ class StudentData(object):
         ''' use cross validation to split data into training and test datasets '''
         print("\nsplitting test and train data sets with {} test size and {} random state".format(self.test_size, self.random_state))
         self.Xtr, self.Xt, self.Ytr, self.Yt = model_selection.train_test_split(self.X, self.y, test_size=self.test_size, random_state=self.random_state)
-<<<<<<< HEAD
 
 # === model ===
 def StudentModel(object):
@@ -244,7 +234,6 @@ def StudentModel(object):
 
 # TODO: Execute the 'train_predict' function for each classifier and each training set size
 # train_predict(clf, X_train, y_train, X_test, y_test)
-=======
         print("\ttest & train data sets split")
         '''
         Gaussian Naive Bayes (GaussianNB)
@@ -278,7 +267,7 @@ def StudentModel(object):
 #        self.clf_GNB.sigmas = sorted(zip(self.X.columns,self.clf_GNB.sigma_[0], self.clf_GNB.sigma_[1]), key=lambda x: x[1], reverse=True)  # sigma is variance of each parameter, theta is mean
 #        print("Gaussian - Naive Bayes sigmas for each input")
 #        for item in self.clf_GNB.sigmas: print("\t{:.4}\t{:.4}\t{}".format(item[1], item[2], item[0]))
-#        return("mean accuracy given test data/labels is {:.1%}".format(self.clf_GNB.score)) 
+#        return("mean accuracy given test data/labels is {:.1%}".format(self.clf_GNB.score))
     def setDecisionTree(self):
         '''Methods
         apply(X[, check_input])	Returns the index of the leaf that each sample is predicted as.
@@ -335,5 +324,4 @@ def StudentModel(object):
         '''
         self.clf_LR.fit(self.Xtr, self.Ytr)
         self.clf_LR.score = self.clf_LR.score(self.Xt, self.Yt)   # score vs test data
-        return("mean accuracy given test data/labels is {:.1%}".format(self.clf_LR.score)) 
->>>>>>> 272888ceca06c86faa61acfc25ea202da14925ad
+        return("mean accuracy given test data/labels is {:.1%}".format(self.clf_LR.score))
