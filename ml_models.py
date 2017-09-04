@@ -206,7 +206,7 @@ class Model(object):
         r2_score   = r2_score(y_true, y_predict)
         return(r2_score)
     def fit_model(self):
-        """ Performs grid search over the 'max_depth' parameter for a 
+        """ Performs grid search over the 'max_depth' parameter for a
             decision tree regressor trained on the input data [X, y]. """
 #     # Create cross-validation sets from the training data
         self.cv_sets = ShuffleSplit(n_splits=self.n_splits, test_size=self.test_size, random_state=self.random_state)
@@ -300,7 +300,7 @@ def splitTrainDataReg(x,y,test_size=0.25, random_state=0, model='Decision Tree')
     mse         = mean_squared_error(reg.predict(Xt),Yt)
     r2          = r2_score(reg.predict(Xt),Yt)              # aka coefficient of determination
     exp_var     = explained_variance_score(reg.predict(Xt),Yt)
-    print('\n' + model + 
+    print('\n' + model +
 #         '\n\tAccuracy:'.ljust(14)   + '{:.2f}'.format(accuracy) +
 #         '\n\tF1 Score:'.ljust(14)   + '{:.2f}'.format(F1_score) +
 #         '\n\tF1 Score_c:'.ljust(14) + '{:.2f}'.format(F1_score_c) +
@@ -329,7 +329,7 @@ def splitTrainData(x,y,test_size=0.25, random_state=0, model='Decision Tree'):
     F1_score_c  = 2 * (precision * recall) / (precision + recall)
     mae         = mean_absolute_error(clf.predict(Xt),Yt)
     mse         = mean_squared_error(clf.predict(Xt),Yt)
-    print('\n' + model + 
+    print('\n' + model +
         '\n\tAccuracy:'.ljust(14)   + '{:.2f}'.format(accuracy) +
         '\n\tF1 Score:'.ljust(14)   + '{:.2f}'.format(F1_score) +
         '\n\tF1 Score_c:'.ljust(14) + '{:.2f}'.format(F1_score_c) +
@@ -463,6 +463,23 @@ def plot_DTReg():
     plot_learning_curve(estimator, title, X, y, (-0.1, 1.1), cv=cv, scoring=score, n_jobs=4)
     plt.show()
 
+def plotCorr(data):
+    '''plot correlation matrix for data (pandas DataFrame), exludes non-numeric attributes'''
+    correlations    = data.corr()
+    names           = list(correlations.columns)
+    # plot correlation matrix
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    cax = ax.matshow(correlations, vmin=-1, vmax=1)
+    fig.colorbar(cax)
+    ticks = np.arange(0,len(names),1)
+    ax.set_xticks(ticks)
+    ax.set_yticks(ticks)
+    ax.set_xticklabels(names)
+    ax.set_yticklabels(names)
+    plt.show()
+
+
 ## === functions from boston_housing ProjectData
 
 def ModelLearning(X, y, tight={'rect':(0,0,0.75,1)}):
@@ -486,7 +503,7 @@ def ModelLearning(X, y, tight={'rect':(0,0,0.75,1)}):
         train_mean = np.mean(train_scores, axis = 1)
         test_std = np.std(test_scores, axis = 1)
         test_mean = np.mean(test_scores, axis = 1)
-        # Subplot the learning curve 
+        # Subplot the learning curve
         ax = fig.add_subplot(2, 2, k+1)
         ax.plot(sizes, train_mean, 'o-', color = 'r', label = 'Training Score')
         ax.plot(sizes, test_mean, 'o-', color = 'g', label = 'Testing Score')
@@ -517,7 +534,7 @@ def ModelLearning(X, y, tight={'rect':(0,0,0.75,1)}):
 def ModelComplexity(X, y):
     """ Calculates the performance of the model as model complexity increases.
         The learning and testing errors rates are then plotted. """
-    
+
     # Create 10 cross-validation sets for training and testing
 #    cv = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.2, random_state = 0)
     cv = ShuffleSplit(n_splits = 10, test_size = 0.2, random_state = 0)
@@ -544,7 +561,7 @@ def ModelComplexity(X, y):
         train_mean + train_std, alpha = 0.15, color = 'r')
     plt.fill_between(max_depth, test_mean - test_std, \
         test_mean + test_std, alpha = 0.15, color = 'g')
-    
+
     # Visual aesthetics
     plt.legend(loc = 'lower right')
     plt.xlabel('Maximum Depth')
