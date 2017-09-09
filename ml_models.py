@@ -195,7 +195,32 @@ class Model(object):
         self.project    = ProjectData(project)
         self.y          = self.project.target_data          # need to incorporate reg and lc data sets...
         self.X          = self.project.feature_data
-        self.fit_model()
+        self.preprocessData()
+        self.splitTrainTest()
+#        self.fit_model()
+    def preprocessData(self):
+        ''' transpose objects to numerical data -> binary where appropriate '''
+        # convert yes/no to 1/0
+        print("\npreprocessing X & y, inputs and target values, replacing yes/no with 1/0")
+        if self.y.dtype == object:          self.y.replace(to_replace=['yes', 'no'], value=[1, 0], inplace=True)
+        print("\ty (target) values completed")
+        for col, col_data in self.X.iteritems():
+            if col_data.dtype == object:    self.X[col].replace(to_replace=['yes', 'no'], value=[1, 0], inplace=True)
+        # use separate for loop to complete in place changes before processing 'get_dummies'
+        print("\tX (input) values completed")
+        for col, col_data in self.X.iteritems():
+            if col_data.dtype == object:    self.X = self.X.join(pd.get_dummies(col_data, prefix = col))
+        print("\tconverted categorical variable into dummy/indicator variables")
+        # cast float64 to int64 for memory use and ease of reading (issue with get_dummies)
+        for col in self.X.select_dtypes(['float64']):
+            self.X[col] = self.X[col].astype('int64')
+        print("\tconverted float to integer")
+        # remove remaining object columns
+        for col in self.X.select_dtypes(['O']):
+            del self.X[col]
+        print("\tremoved initial columns, now that they have been converted")
+        self.all = pd.concat((self.X, self.y), axis=1)
+        print("\tcreated 'all' dataframe, adding target as final column")
     def splitTrainTest(self):
         ''' use cross validation to split data into training and test datasets '''
         self.Xtr, self.Xt, self.Ytr, self.Yt = model_selection.train_test_split(self.X, self.y, test_size=self.test_size, random_state=self.random_state)
@@ -243,18 +268,21 @@ class Model(object):
         plt.figtext(x=0.5, y=0.12, s = reg_label, bbox=bbox, horizontalalignment='center', verticalalignment='bottom')
 #        plt.legend(loc = 'upper center')
         plt.show()
-    def viewScatterPlots(self, newX, newY, color_xy='blue', color_newxy='red'):
+    def viewScatterPlots(self, newX=None, newY=None, color_xy='blue', color_newxy='red'):
         ''' setup charts for plotting input features vs scatterplot of historical values '''
         for i, feat in enumerate(self.X.keys()):
             plt.scatter(self.X[feat], self.y, color=color_xy)
-            plt.scatter(newX[i], newY, color=color_newxy)
+            if newX != None:
+                plt.scatter(newX[i], newY, color=color_newxy)       # for
             plt.xlabel('feature {}'.format(feat))
             plt.show()
-    def viewRegPlots(self, color='yellow', alpha=0.4):
+    def viewRegPlots(self, color='yellow', alpha=0.4, featureStart=0):    # TODO: allow graphing more than 4 features
         ''' setup charts for plotting features vs target variable '''
-        fig = plt.figure(figsize=(16,10))
+        fig         = plt.figure(figsize=(16,10))
+        featureEnd  = min(featureStart + 4, len(self.project.features))
+        len(self.project.features)
         # Create three different models based on max_depth
-        for k, feature in enumerate(self.project.features):
+        for k, feature in enumerate(self.project.features[featureStart:featureEnd]):
             feature_series  = self.X[feature].values.reshape(-1,1)
             reg = LinearRegression()
             reg.fit(feature_series, self.y)

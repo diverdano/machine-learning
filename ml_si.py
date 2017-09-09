@@ -43,6 +43,7 @@ from sklearn.linear_model import LogisticRegression
 
 # metrics
 import sklearn.metrics
+from sklearn.metrics import accuracy_score
 #from sklearn.metrics import f1_score, classification_score, confusion_matrix
 
 # plot
@@ -303,9 +304,40 @@ class MLModel(object):
         pass
     def setGradientDecent(self):
         pass
-    def setSVM(self):
-        pass
-    def setLogisticRegression(self):
+    # def setSVM(self):
+    def setSVM(self, kernel='linear', C=1, gamma=0.1):
+    # def __init__(self, project, kernel='linear', C=1, gamma=0.1):
+        # self.project    = ProjectData(project)
+        self.kernel = kernel
+        self.C      = C
+        self.gamma  = gamma
+        # self.createClassifier()
+        # self.fitData()
+        # self.predict()
+        # self.getAccuracy()
+    # def __repr__(self):
+    #     return str({'accuracy':format(self.accuracy,'0.3'), 'params':self.clf.get_params()})
+    # def createClassifier(self):
+        self.clf = SVC(kernel=self.kernel, C=self.C, gamma=self.gamma)
+        self.train_classifier()
+    #     return self.clf.get_params()
+    # def fitData(self):
+    #     self.clf.fit(self.project.X_train, self.project.y_train)
+    # def plotData(self):
+    #     '''callout to plot function'''
+    #     prettyPicture(self.clf, self.project.X_test, self.project.y_test)
+    # def predict(self):
+        self.pred = self.clf.predict(self.Xt)
+    # def getAccuracy(self):
+        self.accuracy = accuracy_score(self.pred, self.Yt)
+        print("accuracy score is: {}".format(self.accuracy))
+    #     return self.__repr__()
+        print("support vectors {}".format(self.clf.support_vectors_))
+        # get indices of support vectors
+        print("support {}".format(self.clf.support_))
+        # get number of support vectors for each class
+        print("n_support {}".format(self.clf.n_support_))
+    def setLogisticRegression(self, C=1e9):
         pass
         '''Methods
         decision_function(X)	Predict confidence scores for samples.
@@ -321,11 +353,12 @@ class MLModel(object):
         sparsify()	Convert coefficient matrix to sparse format.
         transform(\*args, \*\*kwargs)	DEPRECATED: Support to use estimators as feature selectors will be removed in version 0.19.
         '''
-        self.clf        = LogisticRegression()
+        self.clf        = LogisticRegression(C=C)
         '''(penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True, intercept_scaling=1, class_weight=None, random_state=None, solver='liblinear', max_iter=100, multi_class='ovr', verbose=0, warm_start=False, n_jobs=1)[source]'''
         self.train_classifier()
         self.clf.score  = self.clf.score(self.Xt, self.Yt)   # score vs test data
         self.result          = pd.DataFrame(self.clf.coef_.transpose(),index=self.Xt.columns, columns=["coef"]) # create df with coefficients for each label
         self.result['abs']   = abs(self.result['coef'])
-        print(self.result.sort_values(by='abs', ascending=0)[:10])
+        pd.set_option('display.max_rows', 500)                      # show all features
+        print(self.result.sort_values(by='abs', ascending=0))
         return("mean accuracy given test data/labels is {:.1%}".format(self.clf.score))
