@@ -31,6 +31,7 @@ Support Vector Machines (SVM)
 Logistic Regression
 '''
 from sklearn.naive_bayes import GaussianNB
+from sklearn import tree                # decision tree node diagram graphviz
 from sklearn.tree import DecisionTreeClassifier
 # insert here when confirmed
 from sklearn.svm import SVC
@@ -49,6 +50,7 @@ from sklearn.metrics import accuracy_score
 # plot
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import graphviz                     # decision tree node diagram
 
 # === data ===
 def loadStudentData(file):
@@ -204,8 +206,10 @@ class StudentData(object):
         for col in self.X.select_dtypes(['O']):
             del self.X[col]
         print("\tremoved initial columns, now that they have been converted")
-        self.all = pd.concat((self.X, self.y), axis=1)
+        self.all        = pd.concat((self.X, self.y), axis=1)
         print("\tcreated 'all' dataframe, adding target as final column")
+        self.features   = list(self.X.columns)
+        self.label      = self.y.name
     def splitTrainTest(self):
         ''' use cross validation to split data into training and test datasets '''
         print("\nsplitting test and train data sets with {} test size and {} random state".format(self.test_size, self.random_state))
