@@ -212,36 +212,36 @@ class StudentData(object):
 class MLModel(object):
     '''model wrapper for StudentData'''
     def __init__(self, project):
-        self.Xtr    = project.Xtr
-        self.Xt     = project.Xt
-        self.Ytr    = project.Ytr
-        self.Yt     = project.Yt
+        self.Xtr                        = project.Xtr
+        self.Xt                         = project.Xt
+        self.Ytr                        = project.Ytr
+        self.Yt                         = project.Yt
     def train_classifier(self):
         ''' Fits a classifier to the training data. ''' # Start the clock, train the classifier, then stop the clock
-        start       = time()
+        start                           = time()
         self.clf.fit(self.Xtr, self.Ytr)
-        end         = time()
+        end                             = time()
         print("\t{:.4f} seconds to train model".format(end - start))
 #    def predict_labels(clf, features, target):
     def predict_labels(self):
         ''' Makes predictions using a fit classifier based on F1 score. ''' # Start the clock, make predictions, then stop the clock
-        start           = time()
-#        y_pred         = clf.predict(features)
-        self.ytr_pred   = self.clf.predict(self.Xtr)
-        self.yt_pred    = self.clf.predict(self.Xt)
-        end             = time()
+        start                           = time()
+        self.ytr_pred                   = self.clf.predict(self.Xtr)
+        self.yt_pred                    = self.clf.predict(self.Xt)
+        end                             = time()
+        self.f1_score_Ytr               = f1_score(self.Ytr.values, self.ytr_pred, pos_label=1)
+        self.f1_score_Yt                = f1_score(self.Yt.values, self.yt_pred, pos_label=1)
+        self.clf.classification_report  = classification_report(self.Yt, self.yt_pred)
+        self.clf.confusion_matrix       = confusion_matrix(self.Yt, self.yt_pred)
         # Print and return results
         print("\t{:.4f} seconds to make predictions".format(end - start))
-        self.f1_score_Ytr   = f1_score(self.Ytr.values, self.ytr_pred, pos_label=1)
-        self.f1_score_Yt    = f1_score(self.Yt.values, self.yt_pred, pos_label=1)
         print("\t{:.1%}  f1 score, training".format(self.f1_score_Ytr))
         print("\t{:.1%}  f1 score, test".format(self.f1_score_Yt))
         print("\t{:.1%}  mean accuracy score".format(self.clf.score(self.Xt, self.Yt)))
-        self.clf.classification_report  = classification_report(self.Yt, self.yt_pred)
-        self.clf.confusion_matrix       = confusion_matrix(self.Yt, self.yt_pred)
+        print("\tclassification report:")
         print(self.clf.classification_report)
+        print("\tconfusion matrix:")
         print(self.clf.confusion_matrix)
-        print("\ttest & train data sets split")
     def setGaussianNB(self):
         '''Methods
         fit(X, y[, sample_weight])	Fit Gaussian Naive Bayes according to X, y
@@ -316,9 +316,9 @@ class MLModel(object):
     #     '''callout to plot function'''
     #     prettyPicture(self.clf, self.project.X_test, self.project.y_test)
     # def predict(self):
-        self.pred = self.clf.predict(self.Xt)
+        # self.pred = self.clf.predict(self.Xt)
     # def getAccuracy(self):
-        self.accuracy = accuracy_score(self.pred, self.Yt)
+        self.accuracy = accuracy_score(self.yt_pred, self.Yt)
         print("accuracy score is: {}".format(self.accuracy))
     #     return self.__repr__()
         print("support vectors {}".format(self.clf.support_vectors_))
@@ -327,7 +327,6 @@ class MLModel(object):
         # get number of support vectors for each class
         print("n_support {}".format(self.clf.n_support_))
     def setLogisticRegression(self, C=1e9):
-        pass
         '''Methods
         decision_function(X)	Predict confidence scores for samples.
         densify()	Convert coefficient matrix to dense array format.
