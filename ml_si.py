@@ -21,21 +21,19 @@ Stochastic Gradient Descent (SGDC)
 Support Vector Machines (SVM)
 Logistic Regression
 '''
-from sklearn.naive_bayes import GaussianNB
-from sklearn import tree                # decision tree node diagram graphviz
-from sklearn.tree import DecisionTreeClassifier
+#from sklearn import tree                # decision tree node diagram graphviz
 # insert here when confirmed
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
 # check these
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, VotingClassifier # need gradient boosting
-from sklearn.linear_model import LogisticRegression
 # --not in sk learn? -- neural networks
 
 # metrics
-#import sklearn.metrics
-#from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, classification_report
 
 # plot
@@ -69,6 +67,7 @@ def plotCorr(data):
 
 # === plot function ===
 def correlation_matrix(df):
+    ''''''
     fig = plt.figure()
     ax = fig.add_subplot(111)
     cmap = cm.get_cmap('jet', 130)
@@ -210,49 +209,44 @@ class StudentData(object):
 
 # === model ===
 class MLModel(object):
-    '''model wrapper for StudentData'''
+    '''model wrapper for StudentData, post processing and split of training and test records'''
     def __init__(self, project):
         self.Xtr                        = project.Xtr
         self.Xt                         = project.Xt
         self.Ytr                        = project.Ytr
         self.Yt                         = project.Yt
     def train_classifier(self):
-        ''' Fits a classifier to the training data. ''' # Start the clock, train the classifier, then stop the clock
+        '''Fits a classifier to the training data and time the effort''' # Start the clock, train the classifier, then stop the clock
         start                           = time()
         self.clf.fit(self.Xtr, self.Ytr)
         end                             = time()
         print("\t{:.4f} seconds to train model".format(end - start))
 #    def predict_labels(clf, features, target):
     def predict_labels(self):
-        ''' Makes predictions using a fit classifier based on F1 score. ''' # Start the clock, make predictions, then stop the clock
+        '''Makes predictions using a fit classifier based on F1 score. Also provides accuracy''' # Start the clock, make predictions, then stop the clock
+        pos_label                       = 1
         start                           = time()
         self.ytr_pred                   = self.clf.predict(self.Xtr)
         self.yt_pred                    = self.clf.predict(self.Xt)
         end                             = time()
-        self.f1_score_Ytr               = f1_score(self.Ytr.values, self.ytr_pred, pos_label=1)
-        self.f1_score_Yt                = f1_score(self.Yt.values, self.yt_pred, pos_label=1)
-        self.clf.classification_report  = classification_report(self.Yt, self.yt_pred)
-        self.clf.confusion_matrix       = confusion_matrix(self.Yt, self.yt_pred)
+        self.f1_score_Ytr               = f1_score(self.Ytr.values, self.ytr_pred, pos_label=pos_label)
+        self.f1_score_Yt                = f1_score(self.Yt.values, self.yt_pred, pos_label=pos_label)
+        self.accuracy_score             = accuracy_score(self.yt_pred, self.Yt)
+#        self.classifier_score           = self.clf.score(self.Xt, self.Yt) # redundant
+        self.classification_report      = classification_report(self.Yt, self.yt_pred)
+        self.confusion_matrix           = confusion_matrix(self.Yt, self.yt_pred)
         # Print and return results
         print("\t{:.4f} seconds to make predictions".format(end - start))
-        print("\t{:.1%}  f1 score, training".format(self.f1_score_Ytr))
-        print("\t{:.1%}  f1 score, test".format(self.f1_score_Yt))
-        print("\t{:.1%}  mean accuracy score".format(self.clf.score(self.Xt, self.Yt)))
+        print("\t {:.1%} f1 score, training     (positive label is: {})".format(self.f1_score_Ytr, pos_label))
+        print("\t {:.1%} f1 score, test         (positive label is: {})".format(self.f1_score_Yt, pos_label))
+#        print("\t {:.1%} mean accuracy score    (subset accuracy)".format(self.classifier_score))
+        print("\t {:.1%} mean accuracy score    (subset accuracy or jiccard similarity)".format(self.accuracy_score))
         print("\tclassification report:")
-        print(self.clf.classification_report)
+        print(self.classification_report)
         print("\tconfusion matrix:")
-        print(self.clf.confusion_matrix)
+        print(self.confusion_matrix)
     def setGaussianNB(self):
-        '''Methods
-        fit(X, y[, sample_weight])	Fit Gaussian Naive Bayes according to X, y
-        get_params([deep])	Get parameters for this estimator.
-        partial_fit(X, y[, classes, sample_weight])	Incremental fit on a batch of samples.
-        predict(X)	Perform classification on an array of test vectors X.
-        predict_log_proba(X)	Return log-probability estimates for the test vector X.
-        predict_proba(X)	Return probability estimates for the test vector X.
-        score(X, y[, sample_weight])	Returns the mean accuracy on the given test data and labels.
-        set_params(\*\*params)	Set the parameters of this estimator.
-        '''
+        ''''''
         self.clf = GaussianNB()
         self.train_classifier()
         self.predict_labels()
@@ -260,19 +254,7 @@ class MLModel(object):
         print("Gaussian - Naive Bayes sigmas for each input")
         for item in self.clf.sigmas: print("\t{:.4}\t{:.4}\t{}".format(item[1], item[2], item[0]))
     def setDecisionTree(self):
-        '''Methods
-        apply(X[, check_input])	Returns the index of the leaf that each sample is predicted as.
-        decision_path(X[, check_input])	Return the decision path in the tree
-        fit(X, y[, sample_weight, check_input, ...])	Build a decision tree classifier from the training set (X, y).
-        fit_transform(X[, y])	Fit to data, then transform it.
-        get_params([deep])	Get parameters for this estimator.
-        predict(X[, check_input])	Predict class or regression value for X.
-        predict_log_proba(X)	Predict class log-probabilities of the input samples X.
-        predict_proba(X[, check_input])	Predict class probabilities of the input samples X.
-        score(X, y[, sample_weight])	Returns the mean accuracy on the given test data and labels.
-        set_params(\*\*params)	Set the parameters of this estimator.
-        transform(\*args, \*\*kwargs)	DEPRECATED: Support to use estimators as feature selectors will be removed in version 0.19.
-        '''
+        ''''''
         self.clf = DecisionTreeClassifier()
         '''DecisionTreeClassifier(criterion='gini', splitter='best', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_features=None, random_state=None, max_leaf_nodes=None, min_impurity_split=1e-07, class_weight=None, presort=False)[source]'''
         self.train_classifier()
@@ -280,47 +262,55 @@ class MLModel(object):
         self.clf.importances = sorted(zip(self.Xt.columns, self.clf.feature_importances_), key=lambda x: x[1], reverse=True)
         print("decisionTree importances for each input")
         for item in self.clf.importances: print("\t{:.2}\t{}".format(item[1], item[0]))
-    # def setEnsembleMethods(self):
-        '''Ensemble Methods (Bagging, AdaBoost, Random Forest, Gradient Boosting)'''
-    #     pass
+#     def setBagging(self):   # find this library
+#         '''Ensemble Methods, Bagging'''
+# #        self.clf = xyz()
+#         self.train_classifier()
+#         self.predict_labels()
+#     def setGradientBoosting(self):   # find this library
+#         '''Ensemble Methods, Gradient Boosting'''
+# #        self.clf = xyz()
+#         self.train_classifier()
+#         self.predict_labels()
+    def setAdaBoost(self):
+        '''Ensemble Methods, ADA Boost Classifier'''
+        self.clf = AdaBoostClassifier()
+        self.train_classifier()
+        self.predict_labels()
+    def setVoting(self):
+        '''Ensemble Methods, Voting Classifier'''
+        self.clf = VotingClassifier()               #TODO add estimators
+        self.train_classifier()
+        self.predict_labels()
     def setRandomForest(self):
         '''Ensemble Methods, Random Forest'''
-        pass
+        self.clf = RandomForestClassifier()
+        self.train_classifier()
+        self.predict_labels()
+    def setMLPC(self):
+        '''Neural Network, MLPC Classifier'''
+        self.clf = MLPClassifier()
+        self.train_classifier()
+        self.predict_labels()
     def setKNN(self):
         '''K-Nearest Neighbors'''
-        pass
+        self.clf = KNeighborsClassifier()
+        self.train_classifier()
+        self.predict_labels()
     def setGradientDecent(self):
         '''Stochastic Gradient Descent'''
         pass
     # def setSVM(self):
     def setSVM(self, kernel='linear', C=1, gamma=0.1):
-    # def __init__(self, project, kernel='linear', C=1, gamma=0.1):
-        # self.project    = ProjectData(project)
         self.kernel = kernel
         self.C      = C
         self.gamma  = gamma
-        # self.createClassifier()
-        # self.fitData()
-        # self.predict()
-        # self.getAccuracy()
-    # def __repr__(self):
-    #     return str({'accuracy':format(self.accuracy,'0.3'), 'params':self.clf.get_params()})
-    # def createClassifier(self):
         self.clf = SVC(kernel=self.kernel, C=self.C, gamma=self.gamma)
         self.train_classifier()
         self.predict_labels()
-    #     return self.clf.get_params()
-    # def fitData(self):
-    #     self.clf.fit(self.project.X_train, self.project.y_train)
     # def plotData(self):
     #     '''callout to plot function'''
     #     prettyPicture(self.clf, self.project.X_test, self.project.y_test)
-    # def predict(self):
-        # self.pred = self.clf.predict(self.Xt)
-    # def getAccuracy(self):
-        self.accuracy = accuracy_score(self.yt_pred, self.Yt)
-        print("accuracy score is: {}".format(self.accuracy))
-    #     return self.__repr__()
         print("support vectors {}".format(self.clf.support_vectors_))
         # get indices of support vectors
         print("support {}".format(self.clf.support_))
@@ -345,9 +335,7 @@ class MLModel(object):
         '''(penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True, intercept_scaling=1, class_weight=None, random_state=None, solver='liblinear', max_iter=100, multi_class='ovr', verbose=0, warm_start=False, n_jobs=1)[source]'''
         self.train_classifier()
         self.predict_labels()
-#        self.clf.score  = self.clf.score(self.Xt, self.Yt)   # score vs test data
         self.result          = pd.DataFrame(self.clf.coef_.transpose(),index=self.Xt.columns, columns=["coef"]) # create df with coefficients for each label
         self.result['abs']   = abs(self.result['coef'])
         pd.set_option('display.max_rows', 500)                      # show all features
         print(self.result.sort_values(by='abs', ascending=0))
-#        return("mean accuracy given test data/labels is {:.1%}".format(self.clf.score))
