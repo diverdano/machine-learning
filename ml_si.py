@@ -21,7 +21,10 @@ Stochastic Gradient Descent (SGDC)
 Support Vector Machines (SVM)
 Logistic Regression
 '''
-#from sklearn import tree                # decision tree node diagram graphviz
+# TODO test these
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.gaussian_process.kernels import RBF
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 # insert here when confirmed
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
@@ -65,7 +68,32 @@ def plotCorr(data):
     plt.show()
 
 
-# === plot function ===
+# === plot functions ===
+def prettyPicture(clf, X_test, y_test):
+    x_min = 0.0; x_max = 1.0
+    y_min = 0.0; y_max = 1.0
+    # Plot the decision boundary. For that, we will assign a color to each point in the mesh [x_min, m_max]x[y_min, y_max].
+    h = .01  # step size in the mesh
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+    Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+    # Put the result into a color plot
+    Z = Z.reshape(xx.shape)
+    plt.xlim(xx.min(), xx.max())
+    plt.ylim(yy.min(), yy.max())
+    plt.pcolormesh(xx, yy, Z, cmap=pl.cm.seismic)
+    # Plot also the test points
+    grade_sig = [X_test[ii][0] for ii in range(0, len(X_test)) if y_test[ii]==0]
+    bumpy_sig = [X_test[ii][1] for ii in range(0, len(X_test)) if y_test[ii]==0]
+    grade_bkg = [X_test[ii][0] for ii in range(0, len(X_test)) if y_test[ii]==1]
+    bumpy_bkg = [X_test[ii][1] for ii in range(0, len(X_test)) if y_test[ii]==1]
+    plt.scatter(grade_sig, bumpy_sig, color = "b", label="fast")
+    plt.scatter(grade_bkg, bumpy_bkg, color = "r", label="slow")
+    plt.legend()
+    plt.xlabel("bumpiness")
+    plt.ylabel("grade")
+    plt.show()
+#    plt.savefig("test.png")
+
 def correlation_matrix(df):
     ''''''
     fig = plt.figure()
@@ -210,11 +238,30 @@ class StudentData(object):
 # === model ===
 class MLModel(object):
     '''model wrapper for StudentData, post processing and split of training and test records'''
+    models = [
+        ("Nearest Neighbors"    , KNeighborsClassifier(3)),
+        ("Linear SVM"           , SVC(kernel="linear", C=0.025)),                                       # linear kernel
+        ("RBF SVM"              , SVC(gamma=2, C=1)),                                                   # rbf kernel
+        ("Gaussian Process"     , GaussianProcessClassifier(1.0 * RBF(1.0), warm_start=True)),
+        ("Decision Tree"        , DecisionTreeClassifier(max_depth=5)),
+        ("Random Forest"        , RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),),
+        ("Neural Net"           , MLPClassifier(alpha=1)),
+        ("AdaBoost"             , AdaBoostClassifier()),
+        ("Naive Bayes"          , GaussianNB()),
+        ("QDA"                  , QuadraticDiscriminantAnalysis()),
+        ("Logistic Regression"  , LogisticRegression(C=1e9))]                                           # added this one
     def __init__(self, project):
         self.Xtr                        = project.Xtr
         self.Xt                         = project.Xt
         self.Ytr                        = project.Ytr
         self.Yt                         = project.Yt
+    def fitNscore(self):
+        '''quick fit and score of models'''
+        for name, model in self.models:
+            start                           = time()
+            model.fit(self.Xtr, self.Ytr)
+            end                             = time()
+            print("\t{:.1%}\t{:.4f} seconds to train\t{}".format(model.score(self.Xt, self.Yt), end - start, name))
     def train_classifier(self):
         '''Fits a classifier to the training data and time the effort''' # Start the clock, train the classifier, then stop the clock
         start                           = time()
@@ -245,33 +292,25 @@ class MLModel(object):
         print(self.classification_report)
         print("\tconfusion matrix:")
         print(self.confusion_matrix)
-    def setGaussianNB(self):
+    def setGaussianNB(self, verbose=False):
         ''''''
         self.clf = GaussianNB()
         self.train_classifier()
         self.predict_labels()
-        self.clf.sigmas = sorted(zip(self.Xt.columns,self.clf.sigma_[0], self.clf.sigma_[1]), key=lambda x: x[1], reverse=True)  # sigma is variance of each parameter, theta is mean
-        print("Gaussian - Naive Bayes sigmas for each input")
-        for item in self.clf.sigmas: print("\t{:.4}\t{:.4}\t{}".format(item[1], item[2], item[0]))
-    def setDecisionTree(self):
+        if verbose:
+            self.clf.sigmas = sorted(zip(self.Xt.columns,self.clf.sigma_[0], self.clf.sigma_[1]), key=lambda x: x[1], reverse=True)  # sigma is variance of each parameter, theta is mean
+            print("Gaussian - Naive Bayes sigmas for each input")
+            for item in self.clf.sigmas: print("\t{:.4}\t{:.4}\t{}".format(item[1], item[2], item[0]))
+    def setDecisionTree(self, verbose=False):
         ''''''
         self.clf = DecisionTreeClassifier()
         '''DecisionTreeClassifier(criterion='gini', splitter='best', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_features=None, random_state=None, max_leaf_nodes=None, min_impurity_split=1e-07, class_weight=None, presort=False)[source]'''
         self.train_classifier()
         self.predict_labels()
         self.clf.importances = sorted(zip(self.Xt.columns, self.clf.feature_importances_), key=lambda x: x[1], reverse=True)
-        print("decisionTree importances for each input")
-        for item in self.clf.importances: print("\t{:.2}\t{}".format(item[1], item[0]))
-#     def setBagging(self):   # find this library
-#         '''Ensemble Methods, Bagging'''
-# #        self.clf = xyz()
-#         self.train_classifier()
-#         self.predict_labels()
-#     def setGradientBoosting(self):   # find this library
-#         '''Ensemble Methods, Gradient Boosting'''
-# #        self.clf = xyz()
-#         self.train_classifier()
-#         self.predict_labels()
+        if verbose:
+            print("\tdecisionTree importances for each input")
+            for item in self.clf.importances: print("\t\t{:.2}\t{}".format(item[1], item[0]))
     def setAdaBoost(self):
         '''Ensemble Methods, ADA Boost Classifier'''
         self.clf = AdaBoostClassifier()
@@ -297,45 +336,48 @@ class MLModel(object):
         self.clf = KNeighborsClassifier()
         self.train_classifier()
         self.predict_labels()
-    def setGradientDecent(self):
-        '''Stochastic Gradient Descent'''
-        pass
-    # def setSVM(self):
-    def setSVM(self, kernel='linear', C=1, gamma=0.1):
+    def setSVM(self, kernel='linear', C=1, gamma=0.1, verbose=False, plot=False):
         self.kernel = kernel
         self.C      = C
         self.gamma  = gamma
         self.clf = SVC(kernel=self.kernel, C=self.C, gamma=self.gamma)
         self.train_classifier()
         self.predict_labels()
-    # def plotData(self):
-    #     '''callout to plot function'''
-    #     prettyPicture(self.clf, self.project.X_test, self.project.y_test)
-        print("support vectors {}".format(self.clf.support_vectors_))
-        # get indices of support vectors
-        print("support {}".format(self.clf.support_))
-        # get number of support vectors for each class
-        print("n_support {}".format(self.clf.n_support_))
-    def setLogisticRegression(self, C=1e9):
-        '''Methods
+        if plot:
+            '''callout to plot function'''
+            prettyPicture(self.clf, self.Xt, self.Yt)
+        if verbose:
+            print("support vectors {}".format(self.clf.support_vectors_))
+            # get indices of support vectors
+            print("support {}".format(self.clf.support_))
+            # get number of support vectors for each class
+            print("n_support {}".format(self.clf.n_support_))
+    def setLogisticRegression(self, C=1e9, verbose=False):
+        '''
         decision_function(X)	Predict confidence scores for samples.
-        densify()	Convert coefficient matrix to dense array format.
-        fit(X, y[, sample_weight])	Fit the model according to the given training data.
-        fit_transform(X[, y])	Fit to data, then transform it.
-        get_params([deep])	Get parameters for this estimator.
-        predict(X)	Predict class labels for samples in X.
         predict_log_proba(X)	Log of probability estimates.
         predict_proba(X)	Probability estimates.
-        score(X, y[, sample_weight])	Returns the mean accuracy on the given test data and labels.
-        set_params(\*\*params)	Set the parameters of this estimator.
-        sparsify()	Convert coefficient matrix to sparse format.
-        transform(\*args, \*\*kwargs)	DEPRECATED: Support to use estimators as feature selectors will be removed in version 0.19.
         '''
         self.clf        = LogisticRegression(C=C)
         '''(penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True, intercept_scaling=1, class_weight=None, random_state=None, solver='liblinear', max_iter=100, multi_class='ovr', verbose=0, warm_start=False, n_jobs=1)[source]'''
         self.train_classifier()
         self.predict_labels()
-        self.result          = pd.DataFrame(self.clf.coef_.transpose(),index=self.Xt.columns, columns=["coef"]) # create df with coefficients for each label
-        self.result['abs']   = abs(self.result['coef'])
-        pd.set_option('display.max_rows', 500)                      # show all features
-        print(self.result.sort_values(by='abs', ascending=0))
+        if verbose:
+            self.result          = pd.DataFrame(self.clf.coef_.transpose(),index=self.Xt.columns, columns=["coef"]) # create df with coefficients for each label
+            self.result['abs']   = abs(self.result['coef'])
+            pd.set_option('display.max_rows', 500)                      # show all features
+            print('\tlabel coefficients')
+            print(self.result.sort_values(by='abs', ascending=0))
+    # def setGradientDecent(self):
+    #     '''Stochastic Gradient Descent'''
+    #     pass
+    # def setBagging(self):   # find this library
+    #     '''Ensemble Methods, Bagging'''
+    #     self.clf = xyz()
+    #     self.train_classifier()
+    #     self.predict_labels()
+    # def setGradientBoosting(self):   # find this library
+    #     '''Ensemble Methods, Gradient Boosting'''
+    #     self.clf = xyz()
+    #     self.train_classifier()
+    #     self.predict_labels()
