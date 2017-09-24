@@ -257,11 +257,17 @@ class MLModel(object):
         self.Yt                         = project.Yt
     def fitNscore(self):
         '''quick fit and score of models'''
+        print('\tnum\tscore\ttrain (s)\tpredict (s)\tmodel')
+        i = 1
         for name, model in self.models:
-            start                           = time()
+            startTr                     = time()
             model.fit(self.Xtr, self.Ytr)
-            end                             = time()
-            print("\t{:.1%}\t{:.4f} seconds to train\t{}".format(model.score(self.Xt, self.Yt), end - start, name))
+            endTr                       = time()
+            startT                      = time()
+            score = model.score(self.Xt, self.Yt)
+            endT                        = time()
+            print("\t{}\t{:.1%}\t{:.4f}\t{:.4f}\t{}".format(i, score, endTr - startTr, endT - startT, name))
+            i += 1
     def train_classifier(self):
         '''Fits a classifier to the training data and time the effort''' # Start the clock, train the classifier, then stop the clock
         start                           = time()
