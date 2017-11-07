@@ -12,7 +12,7 @@ from time import time
 from sklearn import model_selection     # for train_test_split
 
 # models
-'''
+''' for Udacity nano degree
 Gaussian Naive Bayes (GaussianNB)
 Decision Trees
 Ensemble Methods (Bagging, AdaBoost, Random Forest, Gradient Boosting)
@@ -24,20 +24,21 @@ Logistic Regression
 # TODO test these
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis # aka QDA
 # insert here when confirmed
-from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-# check these
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
+from sklearn.naive_bayes import GaussianNB          # Naive Bayes
+from sklearn.tree import DecisionTreeClassifier     # Decision Tree
+from sklearn.svm import SVC                         # Support Vector Classifier / Support Vector Machines
+from sklearn.linear_model import LogisticRegression # Logistic Regression
+# check theseh
+from sklearn.neighbors import KNeighborsClassifier  # K-Nearest Neighbors
+from sklearn.neural_network import MLPClassifier    # Neural Network
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, VotingClassifier # need gradient boosting
 # --not in sk learn? -- neural networks
 
 # metrics
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, classification_report
+from sklearn.feature_selection import RFE   # feature ranking with recursive feature elimination
 
 # plot
 import matplotlib.pyplot as plt
