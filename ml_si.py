@@ -13,7 +13,7 @@ from sklearn import model_selection     # for train_test_split
 import project_data                     # custom library for
 
 # models
-'''
+''' for Udacity nano degree
 Gaussian Naive Bayes (GaussianNB)
 Decision Trees
 Ensemble Methods (Bagging, AdaBoost, Random Forest, Gradient Boosting)
@@ -25,20 +25,21 @@ Logistic Regression
 # TODO test these
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis # aka QDA
 # insert here when confirmed
-from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-# check these
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
+from sklearn.naive_bayes import GaussianNB          # Naive Bayes
+from sklearn.tree import DecisionTreeClassifier     # Decision Tree
+from sklearn.svm import SVC                         # Support Vector Classifier / Support Vector Machines
+from sklearn.linear_model import LogisticRegression # Logistic Regression
+# check theseh
+from sklearn.neighbors import KNeighborsClassifier  # K-Nearest Neighbors
+from sklearn.neural_network import MLPClassifier    # Neural Network
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, VotingClassifier # need gradient boosting
 # --not in sk learn? -- neural networks
 
 # metrics
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, classification_report
+from sklearn.feature_selection import RFE   # feature ranking with recursive feature elimination
 
 # plot
 import matplotlib.pyplot as plt
@@ -119,18 +120,18 @@ class StudentData(object):
 # === model ===
 class MLModel(object):
     '''model wrapper for StudentData, post processing and split of training and test records'''
-    models = [
-        ("Nearest Neighbors"    , KNeighborsClassifier(3)),
-        ("Linear SVM"           , SVC(kernel="linear", C=0.025)),                                       # linear kernel
-        ("RBF SVM"              , SVC(gamma=2, C=1)),                                                   # rbf kernel
-        ("Gaussian Process"     , GaussianProcessClassifier(1.0 * RBF(1.0), warm_start=True)),
-        ("Decision Tree"        , DecisionTreeClassifier(max_depth=5)),
-        ("Random Forest"        , RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),),
-        ("Neural Net"           , MLPClassifier(alpha=1)),
-        ("AdaBoost"             , AdaBoostClassifier()),
-        ("Naive Bayes"          , GaussianNB()),
-        ("QDA"                  , QuadraticDiscriminantAnalysis()),
-        ("Logistic Regression"  , LogisticRegression(C=1e9))]                                           # added this one
+    models = {
+        "Nearest Neighbors"    : KNeighborsClassifier(3),
+        "Linear SVM"           : SVC(kernel="linear", C=0.025),                                       # linear kernel
+        "RBF SVM"              : SVC(gamma=2, C=1),                                                   # rbf kernel
+        "Gaussian Process"     : GaussianProcessClassifier(1.0 * RBF(1.0), warm_start=True),
+        "Decision Tree"        : DecisionTreeClassifier(max_depth=5),
+        "Random Forest"        : RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
+        "Neural Net"           : MLPClassifier(alpha=1),
+        "AdaBoost"             : AdaBoostClassifier(),
+        "Naive Bayes"          : GaussianNB(),
+        "QDA"                  : QuadraticDiscriminantAnalysis(),
+        "Logistic Regression"  : LogisticRegression(C=1e9)}                                           # added this one
     def __init__(self, project):
         self.Xtr                        = project.Xtr
         self.Xt                         = project.Xt
@@ -140,14 +141,23 @@ class MLModel(object):
         '''quick fit and score of models'''
         print('\tnum\tscore\ttrain (s)\tpredict (s)\tmodel')
         i = 1
-        for name, model in self.models:
+        self.result = {}
+        for name, model in self.models.items():
             startTr                     = time()
             model.fit(self.Xtr, self.Ytr)
             endTr                       = time()
             startT                      = time()
             score = model.score(self.Xt, self.Yt)
             endT                        = time()
-            print("\t{}\t{:.1%}\t{:.4f}\t{:.4f}\t{}".format(i, score, endTr - startTr, endT - startT, name))
+            decision_function           = hasattr(model,"decision_function")    # test to find if decision_function exists, else predict_proba
+#            self.ytr_pred                   = model.predict(self.Xtr)
+            self.yt_pred                    = model.predict(self.Xt)
+            self.result[name]           = {
+                                            "score"                 : score,
+                                            "confusion_matrix"      : confusion_matrix(self.Yt, self.yt_pred),
+                                            "classification_report" : classification_report(self.Yt, self.yt_pred)
+                                        }
+            print("\t{}\t{:.1%}\t{:.4f}\t{:.4f}\t{}\t{}".format(i, score, endTr - startTr, endT - startT, decision_function, name))
             i += 1
     def train_classifier(self):
         '''Fits a classifier to the training data and time the effort''' # Start the clock, train the classifier, then stop the clock
@@ -155,7 +165,6 @@ class MLModel(object):
         self.clf.fit(self.Xtr, self.Ytr)
         end                             = time()
         print("\t{:.4f} seconds to train model".format(end - start))
-#    def predict_labels(clf, features, target):
     def predict_labels(self):
         '''Makes predictions using a fit classifier based on F1 score. Also provides accuracy''' # Start the clock, make predictions, then stop the clock
         pos_label                       = 1
@@ -261,10 +270,6 @@ class MLModel(object):
     # def setBagging(self):   # find this library
     #     '''Ensemble Methods, Bagging'''
     #     self.clf = xyz()
-    #     self.train_classifier()
-    #     self.predict_labels()
     # def setGradientBoosting(self):   # find this library
     #     '''Ensemble Methods, Gradient Boosting'''
     #     self.clf = xyz()
-    #     self.train_classifier()
-    #     self.predict_labels()
