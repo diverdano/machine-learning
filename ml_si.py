@@ -10,6 +10,7 @@ from time import time
 
 # data prep
 from sklearn import model_selection     # for train_test_split
+import project_data                     # custom library for
 
 # models
 '''
@@ -44,127 +45,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import graphviz                     # decision tree node diagram
 
-# === data ===
-def loadStudentData(file):
-    return pd.read_csv(file)
-
 # === test functions ===
-
-# === plot ===
-def plotCorr(data):
-    '''plot correlation matrix for data (pandas DataFrame), exludes non-numeric attributes'''
-    correlations    = data.corr()
-    names           = list(correlations.columns)
-    # plot correlation matrix
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    cax = ax.matshow(correlations, vmin=-1, vmax=1)
-    fig.colorbar(cax)
-    ticks = np.arange(0,len(names),1)
-    ax.set_xticks(ticks)
-    ax.set_yticks(ticks)
-    ax.set_xticklabels(names)
-    ax.set_yticklabels(names)
-    plt.show()
-
-
-# === plot functions ===
-def prettyPicture(clf, X_test, y_test):
-    x_min = 0.0; x_max = 1.0
-    y_min = 0.0; y_max = 1.0
-    # Plot the decision boundary. For that, we will assign a color to each point in the mesh [x_min, m_max]x[y_min, y_max].
-    h = .01  # step size in the mesh
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-    Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
-    # Put the result into a color plot
-    Z = Z.reshape(xx.shape)
-    plt.xlim(xx.min(), xx.max())
-    plt.ylim(yy.min(), yy.max())
-    plt.pcolormesh(xx, yy, Z, cmap=pl.cm.seismic)
-    # Plot also the test points
-    grade_sig = [X_test[ii][0] for ii in range(0, len(X_test)) if y_test[ii]==0]
-    bumpy_sig = [X_test[ii][1] for ii in range(0, len(X_test)) if y_test[ii]==0]
-    grade_bkg = [X_test[ii][0] for ii in range(0, len(X_test)) if y_test[ii]==1]
-    bumpy_bkg = [X_test[ii][1] for ii in range(0, len(X_test)) if y_test[ii]==1]
-    plt.scatter(grade_sig, bumpy_sig, color = "b", label="fast")
-    plt.scatter(grade_bkg, bumpy_bkg, color = "r", label="slow")
-    plt.legend()
-    plt.xlabel("bumpiness")
-    plt.ylabel("grade")
-    plt.show()
-#    plt.savefig("test.png")
-
-def correlation_matrix(df):
-    ''''''
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    cmap = cm.get_cmap('jet', 130)
-#    cmap = cm.get_cmap('jet', 30)
-    cax = ax.imshow(df.corr(), interpolation="nearest", cmap=cmap)
-    # also check out matshow - plot a matrix as an image
-    # also check out xcorr - plot a correlation x & y
-    # minorticks_on()
-#    ax.grid(True, markevery=1)
-    ax.grid(True, markevery=1)
-    plt.title('Project Data Feature Correlation')
-    labels=list(df.columns)
-#    labels=['Sex','Length','Diam','Height','Whole','Shucked','Viscera','Shell','Rings',]
-    ax.set_xticklabels(labels, fontsize=6, minor=True, rotation='vertical')
-    ax.set_yticklabels(labels, fontsize=6, minor=True, rotation='vertical')
-    ax.set_xticks(range(0,len(labels)), minor=True)
-    ax.set_yticks(range(0,len(labels)), minor=True)
-    # Add colorbar, make sure to specify tick locations to match desired ticklabels
-    fig.colorbar(cax, ticks=[-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1])
-    plt.show()
-
-# === model object ===
-
-class ProjectData(object):
-    ''' get and setup data '''
-    infile  = 'ml_projects.json'                    # should drop target/features from json? lift from data with pd.columns[:-1] & [-1]
-    outfile = 'ml_projects_backup.json'
-    df_col  = 10
-    def __init__(self, project='boston_housing'):
-        try:
-            self.loadProjects()
-            if project in self.projects.keys():
-                self.desc       = project # if exists project in self.projects ...
-                self.file       = self.projects[self.desc]['file']
-                self.target     = self.projects[self.desc]['target']        # make y or move this to data, or change reg & lc samples?
-                self.features   = self.projects[self.desc]['features']      # make X or move this to data, or change reg & lc samples?
-                self.loadData()
-                self.prepData()
-            else:
-                print('"{}" project not found; list of projects:\n'.format(project))
-                print("\t" + "\n\t".join(list(self.projects.keys())))
-        except: # advanced use - except JSONDecodeError?
-            print('having issue reading project file...')
-    def loadProjects(self):
-        ''' loads project meta data from file and makes backup '''
-        with open(self.infile) as file:
-            self.projects  = json.load(file)
-        with open(self.outfile, 'w') as outfile:
-            json.dump(self.projects, outfile, indent=4)
-    def saveProjects(self):
-        ''' saves project meta detail to file '''
-        with open(self.infile, 'w') as outfile:
-            json.dump(self.projects, outfile, indent=4)
-    def loadData(self):
-        '''load data set as pandas.DataFrame'''
-        self.data           = pd.read_csv(self.file)
-        pd.set_option('display.width', None)                    # show columns without wrapping
-        pd.set_option('display.max_columns', None)              # show all columns without elipses (...)
-        pd.set_option('display.max_rows', self.df_col)               # show default number of rows for summary
-        print("file loaded: {}".format(self.file))
-        print("{} dataset has {} data points with {} variables each\n".format(self.desc, *self.data.shape))
-        print("DataFrame Description (numerical attribute statistics)")
-        print(self.data.describe())
-        print("DataFrame, head")
-        print(self.data.head())
-    def prepData(self):
-        '''split out target and features based on known column names in project meta data'''
-        self.target_data    = self.data[self.target]
-        self.feature_data   = self.data.drop(self.target, axis = 1)
 
 # === transform data ===
 
@@ -175,7 +56,7 @@ class StudentData(object):
     n_splits        = 10
     params          = {'max_depth': list(range(1,11))}
     def __init__(self, project, test_size=None):
-        self.project    = ProjectData(project)
+        self.project    = project_data.ProjectData(project)
         if test_size!=None: self.test_size = test_size
         self.y          = self.project.target_data          # need to incorporate reg and lc data sets...
         self.X          = self.project.feature_data
