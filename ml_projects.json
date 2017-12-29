@@ -26,6 +26,21 @@
         "target": "",
         "data": ""
     },
+    "family_offices":{
+        "file": "/Users/dan/Documents/dan/consulting/clients/do_fo_strip.csv"
+    },
+    "vix_history":{
+        "file": "projects/markets/vix.csv"
+    },
+    "inc5000":{
+        "file": "projects/inc5000/clean_inc5000_2017.csv"
+    },
+    "inc5k_leaders":{
+        "file": "projects/inc5000/raw_inc5000_2017_leadership.csv"
+    },
+    "inc5k_rev":{
+        "file": "projects/inc5000/raw_inc5000_2017_rev.csv"
+    },
     "credit_unions":{
         "file": "./projects/cr_unions/Credit Union Branch Information.txt",
         "type": "csv"

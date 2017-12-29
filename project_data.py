@@ -6,6 +6,7 @@
 import numpy as np
 import pandas as pd
 import simplejson as json
+import csv
 from time import time
 import matplotlib.pyplot as plt
 
@@ -43,6 +44,15 @@ def getFirstLast(name):
     # return {"FirstName":firstName, "FirstInitial":firstInitial, "LastName": lastName}
 
 # === test functions ===
+def SniffDelim(file):
+    '''use csv library to sniff delimiters'''
+    with open(file, 'r') as infile:
+        dialect = csv.Sniffer().sniff(infile.read())
+    #     infile
+    # sniffer = csv.Sniffer()
+    # dialect = sniffer.sniff(file)
+    return dict(dialect.__dict__)
+
 # === data ===
 
 client_data = [[5,17,15],[4,32,22],[8,3,12]]
@@ -109,7 +119,7 @@ class ProjectData(object):
                     self.features   = self.projects[self.desc]['features']      # make X or move this to data, or change reg & lc samples?
                     self.prepData()
                     self.preprocessData()
-                else: print("\t'target' and 'features' need to be specified for prepping model data")
+                else: print("\n\t'target' and 'features' need to be specified for prepping model data")
             else:
                 print('"{}" project not found; list of projects:\n'.format(project))
                 print("\t" + "\n\t".join(sorted(list(self.projects.keys()))))
@@ -129,20 +139,24 @@ class ProjectData(object):
     def loadData(self):
         '''load data set as pandas.DataFrame'''
         try:
-            self.data           = pd.read_csv(self.file)
+            print('\n\tchecking delimiter')
+            delimiter = SniffDelim(self.file)['delimiter']
+            print('\tdelimiter character identified: {}'.format(delimiter))
+            self.data = pd.read_csv(self.file, sep=delimiter)
         except UnicodeDecodeError:
-            print('unicode error, trying latin1')               # implement logging
+            print('\tunicode error, trying latin1')               # implement logging
             self.data           = pd.read_csv(self.file, encoding='latin1')
+#            self.data           = pd.read_csv(self.file, encoding='latin1', sep=delimiter) # including sep in this call fails...
         pd.set_option('display.width', None)                    # show columns without wrapping
         pd.set_option('display.max_columns', None)              # show all columns without elipses (...)
         pd.set_option('display.max_rows', self.df_col)          # show default number of rows for summary
-        print("file loaded: {}".format(self.file))
-        print("{} dataset has {} data points with {} variables each\n".format(self.desc, *self.data.shape))
-        print("DataFrame Description (numerical attribute statistics)")
+        print("\tfile loaded")
+        print("\n\t{} dataset has {} data points with {} variables each\n".format(self.desc, *self.data.shape))
+        print("\n\tDataFrame Description (numerical attribute statistics)\n")
         print(self.data.describe())
-        print("DataFrame, head")
+        print("\n\tDataFrame, head\n")
         print(self.data.head())
-        print("\n{} Data Summary".format(self.desc))
+        print("\n\t{} Data Summary\n".format(self.desc))
         print("\t{}\trecords".format(len(self.data.index)))
         print("\t{}\tfeatures\n".format(len(self.data.columns)))
         for index, item in enumerate(sorted(self.data.columns)): print("\t{}\t'{}'".format(index + 1, item))
@@ -153,7 +167,7 @@ class ProjectData(object):
         self.y              = self.data[self.target]
         self.X              = self.data.drop(self.target, axis = 1)
     def preprocessData(self):
-        ''' transpose objects to numerical data -> binary where appropriate '''
+        '''transpose objects to numerical data -> binary where appropriate '''
         # convert yes/no to 1/0
         print("\npreprocessing X & y, inputs and target values, replacing yes/no with 1/0")
         if self.y.dtype == object:          self.y.replace(to_replace=['yes', 'no'], value=[1, 0], inplace=True)
