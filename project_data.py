@@ -48,9 +48,6 @@ def SniffDelim(file):
     '''use csv library to sniff delimiters'''
     with open(file, 'r') as infile:
         dialect = csv.Sniffer().sniff(infile.read())
-    #     infile
-    # sniffer = csv.Sniffer()
-    # dialect = sniffer.sniff(file)
     return dict(dialect.__dict__)
 
 # === data ===
