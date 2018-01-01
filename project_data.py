@@ -104,25 +104,30 @@ class ProjectData(object):
     infile  = 'ml_projects.json'                    # should drop target/features from json? lift from data with pd.columns[:-1] & [-1]
     outfile = 'ml_projects_backup.json'
     df_col  = 10
-    def __init__(self, project='boston_housing'):
-        try:
-            self.loadProjects()
-            if project in self.projects.keys():
-                self.desc       = project # if exists project in self.projects ...
-                self.file       = self.projects[self.desc]['file']
-                self.loadData()
-                if all (k in self.projects[self.desc] for k in ('target', 'features')):
-                    self.target     = self.projects[self.desc]['target']        # make y or move this to data, or change reg & lc samples?
-                    self.features   = self.projects[self.desc]['features']      # make X or move this to data, or change reg & lc samples?
-                    self.prepData()
-                    self.preprocessData()
-                else: print("\n\t'target' and 'features' need to be specified for prepping model data")
-            else:
-                print('"{}" project not found; list of projects:\n'.format(project))
-                print("\t" + "\n\t".join(sorted(list(self.projects.keys()))))
-        except: # advanced use - except JSONDecodeError?
-            print('having issue reading project file...')
-            print(e)
+    def __init__(self, project='boston_housing', file=None):
+        if file:
+            self.desc           = 'file used'
+            self.file           = file
+            self.loadData()
+        else:
+            try:
+                self.loadProjects()
+                if project in self.projects.keys():
+                    self.desc       = project # if exists project in self.projects ...
+                    self.file       = self.projects[self.desc]['file']
+                    self.loadData()
+                    if all (k in self.projects[self.desc] for k in ('target', 'features')):
+                        self.target     = self.projects[self.desc]['target']        # make y or move this to data, or change reg & lc samples?
+                        self.features   = self.projects[self.desc]['features']      # make X or move this to data, or change reg & lc samples?
+                        self.prepData()
+                        self.preprocessData()
+                    else: print("\n\t'target' and 'features' need to be specified for prepping model data")
+                else:
+                    print('"{}" project not found; list of projects:\n'.format(project))
+                    print("\t" + "\n\t".join(sorted(list(self.projects.keys()))))
+            except: # advanced use - except JSONDecodeError?
+                print('having issue reading project file...')
+                print(e)
     def loadProjects(self):
         ''' loads project meta data from file and makes backup '''
         with open(self.infile) as file:
