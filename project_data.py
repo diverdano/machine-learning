@@ -1,21 +1,17 @@
 #!usr/bin/env python
 
-# === load libraries ===
+# == load libraries ==
 
 # key libraries
-import numpy as np
 import pandas as pd
 import simplejson as json
-import csv
-from time import time
-import matplotlib.pyplot as plt
+import csv                                      # for csv sniffer
 
 # data sets
 from sklearn.datasets import load_linnerud      # linear regression data set
-from sklearn.datasets import load_digits
+from sklearn.datasets import load_digits        # learning curve data set
 
-
-# === data ===
+# == data ==
 
 def mergeDFs(df1, df2, df1_cols, df2_cols, join_type='outer'):
     '''merge df1 and df2 on df1_columns (list) and df2_columns (list) using join type'''
@@ -43,17 +39,14 @@ def getFirstLast(name):
     # lastName = name[2]
     # return {"FirstName":firstName, "FirstInitial":firstInitial, "LastName": lastName}
 
-# === test functions ===
-def SniffDelim(file):
-    '''use csv library to sniff delimiters'''
-    with open(file, 'r') as infile:
-        dialect = csv.Sniffer().sniff(infile.read())
-    return dict(dialect.__dict__)
+# == test functions ==
+# def SniffDelim(file):
+#     '''use csv library to sniff delimiters'''
+#     with open(file, 'r') as infile:
+#         dialect = csv.Sniffer().sniff(infile.read())
+#     return dict(dialect.__dict__)
 
-# === data ===
-
-client_data = [[5,17,15],[4,32,22],[8,3,12]]
-clients = np.transpose(client_data)
+# == data ==
 
 def loadRegSample(self):
     ''' load regression sample dataset '''
@@ -65,8 +58,7 @@ def loadLearningCurveSample(self):
     print(self.data.DESCR)
 
 def makeTerrainData(self, n_points=1000):
-###############################################################################
-### make the toy dataset
+    '''make the toy dataset'''
     self.data = {}
     random.seed(42)
     grade = [random.random() for ii in range(0,n_points)]
@@ -97,18 +89,13 @@ def makeTerrainData(self, n_points=1000):
 # #                 , "slow":{"grade":grade_bkg, "bumpiness":bumpy_bkg}}
 # #         return X_train, y_train, X_test, y_test
 
-# === data object ===
+# == data object ==
 
 class ProjectData(object):
     ''' get and setup data '''
     infile          = 'ml_projects.json'                    # should drop target/features from json? lift from data with pd.columns[:-1] & [-1]
     outfile         = 'ml_projects_backup.json'
     df_col          = 10
-    # test_size       = 0.20
-    # random_state    = 0
-    # n_splits        = 10
-    # params          = {'max_depth': list(range(1,11))}
-    # def __init__(self, project='boston_housing', file=None, split=False):
     def __init__(self, project='boston_housing', file=None):
         if file:
             self.desc           = 'file used'
@@ -120,18 +107,21 @@ class ProjectData(object):
                 if project in self.projects.keys():
                     self.desc       = project # if exists project in self.projects ...
                     self.file       = self.projects[self.desc]['file']
-                    self.loadData()
+                    try:
+                        self.loadData()
+                    except Exception as e:
+                        print("having issue loading data")
+                        print(e)
                     if all (k in self.projects[self.desc] for k in ('target', 'features')):
                         self.target     = self.projects[self.desc]['target']        # make y or move this to data, or change reg & lc samples?
                         self.features   = self.projects[self.desc]['features']      # make X or move this to data, or change reg & lc samples?
                         self.prepData()
                         self.preprocessData()
-#                        if split: self.splitTrainTest()
                     else: print("\n\t'target' and 'features' need to be specified for prepping model data")
                 else:
                     print('"{}" project not found; list of projects:\n'.format(project))
                     print("\t" + "\n\t".join(sorted(list(self.projects.keys()))))
-            except: # advanced use - except JSONDecodeError?
+            except Exception as e: # advanced use - except JSONDecodeError?
                 print('having issue reading project file...')
                 print(e)
     def loadProjects(self):
@@ -146,15 +136,20 @@ class ProjectData(object):
             json.dump(self.projects, outfile, indent=4)
     def loadData(self):
         '''load data set as pandas.DataFrame'''
+        # delimiter = self.sniffDelim(self.file)['delimiter']
+        # print('\tdelimiter character identified: {}'.format(delimiter))
+        # self.data = pd.read_csv(self.file, sep=delimiter)
         try:
             print('\n\tchecking delimiter')
-            delimiter = SniffDelim(self.file)['delimiter']
+            delimiter = self.sniffDelim()['delimiter']
             print('\tdelimiter character identified: {}'.format(delimiter))
             self.data = pd.read_csv(self.file, sep=delimiter)
         except UnicodeDecodeError:
             print('\tunicode error, trying latin1')               # implement logging
             self.data           = pd.read_csv(self.file, encoding='latin1')
 #            self.data           = pd.read_csv(self.file, encoding='latin1', sep=delimiter) # including sep in this call fails...
+        except Exception as e:
+            print(e)
         pd.set_option('display.width', None)                    # show columns without wrapping
         pd.set_option('display.max_columns', None)              # show all columns without elipses (...)
         pd.set_option('display.max_rows', self.df_col)          # show default number of rows for summary
@@ -175,13 +170,14 @@ class ProjectData(object):
     def preprocessData(self):
         '''transpose objects to numerical data -> binary where appropriate '''
         # convert yes/no to 1/0
-        print("\n\tpreprocessing X & y, inputs and target values, replacing yes/no with 1/0\n")
+        print("\n\tprocessing target/y variable")
+        print("\n\tpreprocessing X & y, inputs and target values, replacing yes/no with 1/0")
         if self.y.dtype == object:          self.y.replace(to_replace=['yes', 'no'], value=[1, 0], inplace=True)
-        print("\ty (target) values completed")
+        print("\t\ty (target) values completed")
         for col, col_data in self.X.iteritems():
             if col_data.dtype == object:    self.X[col].replace(to_replace=['yes', 'no'], value=[1, 0], inplace=True)
         # use separate for loop to complete in place changes before processing 'get_dummies'
-        print("\tX (input) values completed")
+        print("\t\tX (input) values completed")
         for col, col_data in self.X.iteritems():
             if col_data.dtype == object:    self.X = self.X.join(pd.get_dummies(col_data, prefix = col))
         print("\tconverted categorical variable into dummy/indicator variables")
@@ -189,6 +185,7 @@ class ProjectData(object):
         for col in self.X.select_dtypes(['float64']):
             self.X[col] = self.X[col].astype('int64')
         print("\tconverted float to integer")
+        # if all else fails: _get_numeric_data()       # limit to numeric data
         # remove remaining object columns
         for col in self.X.select_dtypes(['O']):
             del self.X[col]
@@ -199,3 +196,8 @@ class ProjectData(object):
         self.label      = self.y.name
         print("\n\tTarget/Label Description (numerical attribute statistics)\n")
         print(self.y.describe())
+    def sniffDelim(self):
+        '''helper functionuse csv library to sniff delimiters'''
+        with open(self.file, 'r') as infile:
+            dialect = csv.Sniffer().sniff(infile.read())
+        return dict(dialect.__dict__)

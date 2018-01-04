@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import graphviz                     # decision tree node diagram
 #import pylab as pl                 # explore this
-
+#import visuals as vs               # explore this
 
 # === plot ===
 def plotCorr(data):
@@ -31,23 +31,21 @@ def plotCorr(data):
     ax.set_yticklabels(names)
     plt.show()
 
-def plotLine(data, x=None, y=None):
-    ''' plot line given an input DataFrame '''
-    fig = plt.figure()
-
-#def plotData(data, title=None, xlabel=None, ylabel=None, grid=True, legend=True):
-def plotData(plot_series, title=None, xlabel=None, ylabel=None, grid=True, legend=True):
-    ''' plot data series '''
+def plotData(data, title=None, xlabel=None, ylabel=None, grid=True, legend=True):
+    ''' plot data series from pandas.Series: TODO: test alt data structures'''
     plt.figure()
-    if title == None:   title = 'Title of graph'
+    # dressing
+    if title    == None : title  = 'Title of graph'
+    if xlabel   == None : xlabel = 'x axis label'
+    if ylabel   == None : ylabel = 'y axis label'
+    if grid             : plt.grid()
+    if legend           : plt.legend(loc="best")
     plt.title(title)
-    if xlabel == None:  xlabel = 'x axis label'
     plt.xlabel(xlabel)
-    if ylabel == None:  ylabel = 'y axis label'
     plt.ylabel(ylabel)
-    if grid == True:    plt.grid()
-    if legend == True:  plt.legend(loc="best")
-    plt.plot(data.index, data)
+    # plot/chart type
+    if type(data) == pd.core.series.Series: plt.plot(data.index, data)  # need to improve the type test
+    # display plot
     plt.show()
 
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None, scoring=None, n_jobs=1, train_sizes=np.linspace(.1, 1.0, 20)):

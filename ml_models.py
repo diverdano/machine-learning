@@ -33,42 +33,25 @@ from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis # aka QDA
 # insert here when confirmed
-from sklearn.naive_bayes import GaussianNB          # Naive Bayes
-from sklearn.tree import DecisionTreeClassifier     # Decision Tree
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.svm import SVC                         # Support Vector Classifier / Support Vector Machines
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import LogisticRegression # Logistic Regression
-# check theseh
-from sklearn.neighbors import KNeighborsClassifier  # K-Nearest Neighbors
-from sklearn.neural_network import MLPClassifier    # Neural Network
+from sklearn.naive_bayes import GaussianNB                              # Naive Bayes
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor  # Decision Tree
+from sklearn.svm import SVC                                             # Support Vector Classifier / Support Vector Machines
+from sklearn.linear_model import LinearRegression, LogisticRegression   # Logistic Regression
+# check these
+from sklearn.neighbors import KNeighborsClassifier                      # K-Nearest Neighbors
+from sklearn.neural_network import MLPClassifier                        # Neural Network
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, VotingClassifier # need gradient boosting
 # --not in sk learn? -- neural networks
 
 # metrics
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import classification_report
-from sklearn.metrics import f1_score
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, classification_report
+from sklearn.metrics import f1_score, r2_score, mean_absolute_error, mean_squared_error
 from sklearn.metrics import explained_variance_score, make_scorer
-from sklearn.feature_selection import RFE   # feature ranking with recursive feature elimination
+from sklearn.feature_selection import RFE                               # feature ranking with recursive feature elimination
 
-# plot
-import util_plot
-#import matplotlib.pyplot as plt
-#import matplotlib.cm as cm
-#from projects.boston_housing import visuals as vs
-#import visuals as vs
-#import pylab as pl ### not needed...?
-
-# data prep
-import project_data                     # custom library for
-
+# custom
+import util_plot        # plotting functions
+import project_data     # data sourcing and pre-processing
 
 # === test functions ===
 
@@ -186,19 +169,29 @@ class Model(object):
     #     self.best_est = grid.best_estimator_
     def fitNscore(self):
         '''quick fit and score of models'''
+        print('\n\tfitting model, scoring and running predictions')
         print('\n\tnum\tscore\ttrain (s)\tpredict (s)\tdecision_function\tmodel\n')
         i = 1
         self.result = {}
         for name, model in self.models.items():
             startTr                     = time()
-            model.fit(self.Xtr, self.Ytr)
+            try:
+                model.fit(self.Xtr, self.Ytr)
+            except Exception as e:
+                print(e)
             endTr                       = time()
             startT                      = time()
-            score = model.score(self.Xt, self.Yt)
+            try:
+                score = model.score(self.Xt, self.Yt)
+            except Exception as e:
+                print(e)
             endT                        = time()
             decision_function           = hasattr(model,"decision_function")    # test to find if decision_function exists, else predict_proba
 #            self.ytr_pred                   = model.predict(self.Xtr)
-            self.yt_pred                    = model.predict(self.Xt)
+            try:
+                self.yt_pred                    = model.predict(self.Xt)
+            except Exception as e:
+                print(e)
             self.result[name]           = {
                                             "score"                 : score,
                                             "confusion_matrix"      : confusion_matrix(self.Yt, self.yt_pred),
