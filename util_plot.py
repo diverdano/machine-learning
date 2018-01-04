@@ -11,6 +11,7 @@ from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import graphviz                     # decision tree node diagram
+#import pylab as pl                 # explore this
 
 
 # === plot ===
@@ -102,6 +103,16 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None, scoring=None
 #    return plt
 
 # === plot functions ===
+def output_image(name, format, bytes):
+    '''not sure what this function was for... face recognition?'''
+    image_start = "BEGIN_IMAGE_f9825uweof8jw9fj4r8"
+    image_end = "END_IMAGE_0238jfw08fjsiufhw8frs"
+    data = {}
+    data['name'] = name
+    data['format'] = format
+    data['bytes'] = base64.encodestring(bytes)
+    print(image_start+json.dumps(data)+image_end)
+
 def prettyPicture(clf, X_test, y_test):
     x_min = 0.0; x_max = 1.0
     y_min = 0.0; y_max = 1.0

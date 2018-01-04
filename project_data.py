@@ -101,9 +101,14 @@ def makeTerrainData(self, n_points=1000):
 
 class ProjectData(object):
     ''' get and setup data '''
-    infile  = 'ml_projects.json'                    # should drop target/features from json? lift from data with pd.columns[:-1] & [-1]
-    outfile = 'ml_projects_backup.json'
-    df_col  = 10
+    infile          = 'ml_projects.json'                    # should drop target/features from json? lift from data with pd.columns[:-1] & [-1]
+    outfile         = 'ml_projects_backup.json'
+    df_col          = 10
+    # test_size       = 0.20
+    # random_state    = 0
+    # n_splits        = 10
+    # params          = {'max_depth': list(range(1,11))}
+    # def __init__(self, project='boston_housing', file=None, split=False):
     def __init__(self, project='boston_housing', file=None):
         if file:
             self.desc           = 'file used'
@@ -121,6 +126,7 @@ class ProjectData(object):
                         self.features   = self.projects[self.desc]['features']      # make X or move this to data, or change reg & lc samples?
                         self.prepData()
                         self.preprocessData()
+#                        if split: self.splitTrainTest()
                     else: print("\n\t'target' and 'features' need to be specified for prepping model data")
                 else:
                     print('"{}" project not found; list of projects:\n'.format(project))
@@ -164,14 +170,12 @@ class ProjectData(object):
         for index, item in enumerate(sorted(self.data.columns)): print("\t{}\t'{}'".format(index + 1, item))
     def prepData(self):
         '''split out target and features based on known column names in project meta data'''
-        # self.target_data    = self.data[self.target]
-        # self.feature_data   = self.data.drop(self.target, axis = 1)
         self.y              = self.data[self.target]
         self.X              = self.data.drop(self.target, axis = 1)
     def preprocessData(self):
         '''transpose objects to numerical data -> binary where appropriate '''
         # convert yes/no to 1/0
-        print("\npreprocessing X & y, inputs and target values, replacing yes/no with 1/0")
+        print("\n\tpreprocessing X & y, inputs and target values, replacing yes/no with 1/0\n")
         if self.y.dtype == object:          self.y.replace(to_replace=['yes', 'no'], value=[1, 0], inplace=True)
         print("\ty (target) values completed")
         for col, col_data in self.X.iteritems():
@@ -193,3 +197,5 @@ class ProjectData(object):
         print("\tcreated 'all' dataframe, adding target as final column")
         self.features   = list(self.X.columns)
         self.label      = self.y.name
+        print("\n\tTarget/Label Description (numerical attribute statistics)\n")
+        print(self.y.describe())
