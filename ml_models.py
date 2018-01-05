@@ -9,6 +9,7 @@ import simplejson as json
 import math
 import random
 from time import time
+import warnings
 
 # data prep
 from sklearn import model_selection     # redundant?
@@ -175,29 +176,39 @@ class Model(object):
         self.result = {}
         for name, model in self.models.items():
             startTr                     = time()
-            try:
+            # model.fit(self.Xtr, self.Ytr)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
                 model.fit(self.Xtr, self.Ytr)
-            except Exception as e:
-                print(e)
             endTr                       = time()
+            Tr_time                     = endTr - startTr
             startT                      = time()
-            try:
-                score = model.score(self.Xt, self.Yt)
-            except Exception as e:
-                print(e)
+            score = model.score(self.Xt, self.Yt)
             endT                        = time()
+            T_time                      = endT - startT
             decision_function           = hasattr(model,"decision_function")    # test to find if decision_function exists, else predict_proba
-#            self.ytr_pred                   = model.predict(self.Xtr)
-            try:
-                self.yt_pred                    = model.predict(self.Xt)
-            except Exception as e:
-                print(e)
+            self.yt_pred                = model.predict(self.Xt)
+            cm                          = confusion_matrix(self.Yt, self.yt_pred)
+            # try:
+            #     cm                      = confusion_matrix(self.Yt, self.yt_pred)
+            # except Exception as e:
+            #     print("cm-exception ({}): {}".format(name, e))
+            #     cm                      = 'fail'
+            # cr                      = classification_report(self.Yt, self.yt_pred)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                cr                      = classification_report(self.Yt, self.yt_pred)
+                # try:
+                #     cr                      = classification_report(self.Yt, self.yt_pred)
+                # except Exception as e:
+                #     print("cr-exception ({}): {}".format(name, e))
+                #     cr                      = 'fail'
             self.result[name]           = {
                                             "score"                 : score,
-                                            "confusion_matrix"      : confusion_matrix(self.Yt, self.yt_pred),
-                                            "classification_report" : classification_report(self.Yt, self.yt_pred)
+                                            "confusion_matrix"      : cm,
+                                            "classification_report" : cr
                                         }
-            print("\t{}\t{:.1%}\t{:.4f}\t\t{:.4f}\t\t{}\t\t{}".format(i, score, endTr - startTr, endT - startT, decision_function, name))
+            print("\t{}\t{:.1%}\t{:.4f}\t\t{:.4f}\t\t{}\t\t{}".format(i, score, Tr_time, T_time, decision_function, name))
             i += 1
     def train_classifier(self):
         '''Fits a classifier to the training data and time the effort''' # Start the clock, train the classifier, then stop the clock
