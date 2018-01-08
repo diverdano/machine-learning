@@ -2,7 +2,7 @@
 
 
 # === load libraries ===
-import project_data
+import util_data
 
 # === test functions ===
 def testFirstN(count=1000000):
@@ -38,7 +38,7 @@ class BankData(object):
     dom_assets  = "Domestic Assets (Mil $)"
     branches    = "Domestic Branches"
     def __init__(self, banks):
-        self.banks          = project_data.ProjectData(banks).data[[self.number, self.name, self.site, self.main, self.branches, self.assets]]
+        self.banks          = util_data.ProjectData(banks).data[[self.number, self.name, self.site, self.main, self.branches, self.assets]]
         self.banks.columns = ['bankID','name','charter','location','branches', 'assets']
         self.banks.apply(lambda x: pd.to_numeric(x, errors='ignore'))
     def sort_assets(self, df_col=None):
@@ -57,8 +57,8 @@ class CreditUnionData(object):
     assets      = "ACCT_010"
 #     merge_type  = 'inner'
     def __init__(self, cus, accounts):
-        self.cus            = project_data.ProjectData(cus).data[[self.number, self.name, self.city, self.state, self.site, self.main]]
-        self.accounts       = project_data.ProjectData(accounts).data[[self.number, self.assets]]
+        self.cus            = util_data.ProjectData(cus).data[[self.number, self.name, self.city, self.state, self.site, self.main]]
+        self.accounts       = util_data.ProjectData(accounts).data[[self.number, self.assets]]
         self.merge()
     def merge(self):
         self.parents        = self.cus.loc[self.cus[self.main] == 'Yes']

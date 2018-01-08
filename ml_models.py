@@ -52,7 +52,7 @@ from sklearn.feature_selection import RFE                               # featur
 
 # custom
 import util_plot        # plotting functions
-import project_data     # data sourcing and pre-processing
+import util_data     # data sourcing and pre-processing
 
 # === test functions ===
 
@@ -139,7 +139,7 @@ class Model(object):
         "QDA"                  : QuadraticDiscriminantAnalysis(),
         "Logistic Regression"  : LogisticRegression(C=1e9)}                                           # added this one
     def __init__(self, project, split=False, score=False):
-        self.project    = project_data.ProjectData(project)
+        self.project    = util_data.ProjectData(project)
         # self.preprocessData()
         if split:   self.splitTrainTest()
         if score:   self.fitNscore()
@@ -335,7 +335,7 @@ class ModelSimple(object):
 #     gamma       = 0.1
     accuracy    = None
     def __init__(self, project, kernel='linear', C=1, gamma=0.1):
-        self.project    = project_data.ProjectData(project)
+        self.project    = util_data.ProjectData(project)
         self.kernel = kernel
         self.C      = C
         self.gamma  = gamma

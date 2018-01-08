@@ -93,8 +93,8 @@ def makeTerrainData(self, n_points=1000):
 
 class ProjectData(object):
     ''' get and setup data '''
-    infile          = 'ml_projects.json'                    # should drop target/features from json? lift from data with pd.columns[:-1] & [-1]
-    outfile         = 'ml_projects_backup.json'
+    infile          = 'ml_projects.json'                # should drop target/features from json? lift from data with pd.columns[:-1] & [-1]
+    outfile         = 'ml_projects.json'                # write to same file, use git to manage versions
     df_col          = 10
     def __init__(self, project='boston_housing', file=None):
         if file:
@@ -110,8 +110,8 @@ class ProjectData(object):
                     try:
                         self.loadData()
                     except Exception as e:
-                        print("having issue loading data")
-                        print(e)
+                        print("issue loading data: {}".format(e))
+                        return
                     if all (k in self.projects[self.desc] for k in ('target', 'features')):
                         self.target     = self.projects[self.desc]['target']        # make y or move this to data, or change reg & lc samples?
                         self.features   = self.projects[self.desc]['features']      # make X or move this to data, or change reg & lc samples?
@@ -122,38 +122,37 @@ class ProjectData(object):
                     print('"{}" project not found; list of projects:\n'.format(project))
                     print("\t" + "\n\t".join(sorted(list(self.projects.keys()))))
             except Exception as e: # advanced use - except JSONDecodeError?
-                print('having issue reading project file...')
-                print(e)
+                print('issue reading project file: {}'.format(e))
     def loadProjects(self):
         ''' loads project meta data from file and makes backup '''
-        with open(self.infile) as file:
-            self.projects  = json.load(file)
-        with open(self.outfile, 'w') as outfile:
-            json.dump(self.projects, outfile, indent=4)
+        with open(self.infile) as file: self.projects  = json.load(file)
     def saveProjects(self):
         ''' saves project meta detail to file '''
-        with open(self.infile, 'w') as outfile:
-            json.dump(self.projects, outfile, indent=4)
+        with open(self.outfile, 'w') as outfile: json.dump(self.projects, outfile, indent=4)
     def loadData(self):
-        '''load data set as pandas.DataFrame'''
-        # delimiter = self.sniffDelim(self.file)['delimiter']
-        # print('\tdelimiter character identified: {}'.format(delimiter))
-        # self.data = pd.read_csv(self.file, sep=delimiter)
+        '''check file delimiter and load data set as pandas.DataFrame'''
         try:
             print('\n\tchecking delimiter')
             delimiter = self.sniffDelim()['delimiter']
             print('\tdelimiter character identified: {}'.format(delimiter))
-            self.data = pd.read_csv(self.file, sep=delimiter)
-        except UnicodeDecodeError:
-            print('\tunicode error, trying latin1')               # implement logging
-            self.data           = pd.read_csv(self.file, encoding='latin1')
-#            self.data           = pd.read_csv(self.file, encoding='latin1', sep=delimiter) # including sep in this call fails...
+            try:
+                self.data = pd.read_csv(self.file, sep=delimiter)
+                print("\tfile loaded")
+                self.summarizeData()
+            except UnicodeDecodeError:
+                print('\tunicode error, trying latin1')               # implement logging
+                # self.data           = pd.read_csv(self.file, encoding='latin1')
+                self.data           = pd.read_csv(self.file, encoding='latin1', sep=delimiter) # including sep in this call fails...
+                print("\tfile loaded")
+                self.summarizeData()
         except Exception as e:
-            print(e)
+            raise e
+#            print(e)
+    def summarizeData(self):
+        '''separate data summary/reporting'''
         pd.set_option('display.width', None)                    # show columns without wrapping
         pd.set_option('display.max_columns', None)              # show all columns without elipses (...)
         pd.set_option('display.max_rows', self.df_col)          # show default number of rows for summary
-        print("\tfile loaded")
         print("\n\t{} dataset has {} data points with {} variables each\n".format(self.desc, *self.data.shape))
         print("\n\tDataFrame Description (numerical attribute statistics)\n")
         print(self.data.describe())

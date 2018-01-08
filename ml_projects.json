@@ -42,15 +42,15 @@
         "file": "projects/inc5000/raw_inc5000_2017_rev.csv"
     },
     "credit_unions":{
-        "file": "./projects/cr_unions/Credit Union Branch Information.txt",
+        "file": "projects/cr_unions/Credit Union Branch Information.txt",
         "type": "csv"
     },
     "credit_union_accounts":{
-        "file": "./projects/cr_unions/fs220.txt",
+        "file": "projects/cr_unions/fs220.txt",
         "type": "csv"
     },
     "banks":{
-        "file": "./projects/banks/banks-300m-aum-2016-06.txt",
+        "file": "projects/banks/banks-300m-aum-2016-06.txt",
         "type": "tab"
     },
     "titanic": {
