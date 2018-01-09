@@ -1,6 +1,6 @@
-#!usr/bin/python
+#!usr/bin/env python
 
-# === load libraries ===
+# == load libraries ==
 
 # key libraries
 import numpy as np
@@ -9,7 +9,12 @@ import simplejson as json
 import math
 import random
 from time import time
+
+# runtime support
+import os
+import argparse                         # used when running as script
 import warnings
+import logging
 
 # data prep
 from sklearn import model_selection     # redundant?
@@ -54,7 +59,40 @@ from sklearn.feature_selection import RFE                               # featur
 import util_plot        # plotting functions
 import util_data     # data sourcing and pre-processing
 
-# === test functions ===
+## ===============================
+## === command-line processing ===
+## ===============================
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--port',           default=8000,                           help="sets port number for web service")
+parser.add_argument('--host',           default='localhost',                    help="sets host for web service")
+parser.add_argument('--log_file',       default='log/web.log',                  help="path/file for logging")
+parser.add_argument('--start',          dest='start',   action='store_true',    help="start the server")
+parser.add_argument('--app',            default='simco_app',                    help="name of application")
+parser.add_argument('--debug',          dest='debug',   action='store_true',    help="sets server debug, and level of logging")
+parser.add_argument('--db',             default='sqlite:///simco.db',           help="designates the database to use")
+
+args        = parser.parse_args()
+
+def pargs():
+    '''prints items in args object for ease of reading'''
+    print('\n')
+    for item in args._get_kwargs():
+        k,v = item
+        print('\t' + k + ': ' + str(v))
+
+## ===================================
+## === logging to file and console ===
+## ===================================
+
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+#util.setLogLevel(args.debug, args.log_file)
+#logger = logging.getLogger(args.app)
+logger = logging.getLogger(__name__)
+logger.info("set logger for app {0} - debug level as {1} using logfile: {2}".format(args.app, args.debug, args.log_file))
+
+
+# == test functions ==
 
 def entropy(p1, p2):
     '''calculate entropy for population of classification within an attribute'''
@@ -118,7 +156,7 @@ def printLinearRegressionModel():
     m,b = compute_regression(sleep,scores)
     print("Your linear model is y={}*x+{}".format(m,b))
 
-# === model object ===
+# == model object ==
 
 class Model(object):
     ''' base model object '''
@@ -371,7 +409,7 @@ class ModelNB(ModelSimple):
         self.clf = GaussianNB()
 
 
-# === transform data ===
+# == transform data ==
 
 def splitTrainDataReg(x,y,test_size=0.25, random_state=0, model='Decision Tree'):
     '''split the data into training and testing sets then use classifier or regressor'''
@@ -439,6 +477,8 @@ def splitTrainData(x,y,test_size=0.25, random_state=0, model='Decision Tree'):
                 'labels_train'      : Ytr,
                 'labels_test'       : Yt}
 
+# == specific plots ==
+
 def plot_NB(n_iter=100):
     '''setup for Naive Bays learning curve'''
     title = "Learning Curves (Naive Bayes)"
@@ -488,7 +528,7 @@ def plot_DTReg():
 #    plt.show()
 
 
-## === functions from boston_housing ProjectData
+## == functions from boston_housing ProjectData ==
 
 def ModelLearning(X, y, tight={'rect':(0,0,0.75,1)}):
     """ Calculates the performance of several models with varying sizes of training data.

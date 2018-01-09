@@ -6,10 +6,15 @@
 import pandas as pd
 import simplejson as json
 import csv                                      # for csv sniffer
+import logging
 
 # data sets
 from sklearn.datasets import load_linnerud      # linear regression data set
 from sklearn.datasets import load_digits        # learning curve data set
+
+# == set logging ==
+logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 # == data ==
 
@@ -51,11 +56,11 @@ def getFirstLast(name):
 def loadRegSample(self):
     ''' load regression sample dataset '''
     self.data           = load_linnerud()
-    print(self.data.DESCR)
+    logger.info(self.data.DESCR)
 def loadLearningCurveSample(self):
     ''' load learning curve sample dataset '''
     self.data           = load_digits()
-    print(self.data.DESCR)
+    logger.info(self.data.DESCR)
 
 def makeTerrainData(self, n_points=1000):
     '''make the toy dataset'''
@@ -110,19 +115,22 @@ class ProjectData(object):
                     try:
                         self.loadData()
                     except Exception as e:
-                        print("issue loading data: {}".format(e))
+                        logger.error("issue loading data: ", exc_info=True)
+#                        print("issue loading data: {}".format(e))
                         return
                     if all (k in self.projects[self.desc] for k in ('target', 'features')):
                         self.target     = self.projects[self.desc]['target']        # make y or move this to data, or change reg & lc samples?
                         self.features   = self.projects[self.desc]['features']      # make X or move this to data, or change reg & lc samples?
                         self.prepData()
                         self.preprocessData()
-                    else: print("\n\t'target' and 'features' need to be specified for prepping model data")
+                    logger.warn("'target' and 'features' need to be specified for prepping model data")
+#                    else: print("\n\t'target' and 'features' need to be specified for prepping model data")
                 else:
-                    print('"{}" project not found; list of projects:\n'.format(project))
-                    print("\t" + "\n\t".join(sorted(list(self.projects.keys()))))
+                    logger.warn('"{}" project not found; list of projects:\n'.format(project))
+                    logger.warn("\t" + "\n\t".join(sorted(list(self.projects.keys()))))
             except Exception as e: # advanced use - except JSONDecodeError?
-                print('issue reading project file: {}'.format(e))
+                logger.error("issue reading project file:", exc_info=True)
+#                print('issue reading project file: {}'.format(e))
     def loadProjects(self):
         ''' loads project meta data from file and makes backup '''
         with open(self.infile) as file: self.projects  = json.load(file)
@@ -132,18 +140,18 @@ class ProjectData(object):
     def loadData(self):
         '''check file delimiter and load data set as pandas.DataFrame'''
         try:
-            print('\n\tchecking delimiter')
+            logger.info('\n\tchecking delimiter')
             delimiter = self.sniffDelim()['delimiter']
-            print('\tdelimiter character identified: {}'.format(delimiter))
+            logger.info('\tdelimiter character identified: {}'.format(delimiter))
             try:
                 self.data = pd.read_csv(self.file, sep=delimiter)
-                print("\tfile loaded")
+                logger.info("\tfile loaded")
                 self.summarizeData()
             except UnicodeDecodeError:
-                print('\tunicode error, trying latin1')               # implement logging
+                logger.error('\tunicode error, trying latin1')               # implement logging
                 # self.data           = pd.read_csv(self.file, encoding='latin1')
                 self.data           = pd.read_csv(self.file, encoding='latin1', sep=delimiter) # including sep in this call fails...
-                print("\tfile loaded")
+                logger.info("\tfile loaded")
                 self.summarizeData()
         except Exception as e:
             raise e
@@ -153,15 +161,15 @@ class ProjectData(object):
         pd.set_option('display.width', None)                    # show columns without wrapping
         pd.set_option('display.max_columns', None)              # show all columns without elipses (...)
         pd.set_option('display.max_rows', self.df_col)          # show default number of rows for summary
-        print("\n\t{} dataset has {} data points with {} variables each\n".format(self.desc, *self.data.shape))
-        print("\n\tDataFrame Description (numerical attribute statistics)\n")
-        print(self.data.describe())
-        print("\n\tDataFrame, head\n")
-        print(self.data.head())
-        print("\n\t{} Data Summary\n".format(self.desc))
-        print("\t{}\trecords".format(len(self.data.index)))
-        print("\t{}\tfeatures\n".format(len(self.data.columns)))
-        for index, item in enumerate(sorted(self.data.columns)): print("\t{}\t'{}'".format(index + 1, item))
+        logger.info("\n\t{} dataset has {} data points with {} variables each\n".format(self.desc, *self.data.shape))
+        logger.info("\n\tDataFrame Description (numerical attribute statistics)\n")
+        logger.info(self.data.describe())
+        logger.info("\n\tDataFrame, head\n")
+        logger.info(self.data.head())
+        logger.info("\n\t{} Data Summary\n".format(self.desc))
+        logger.info("\t{}\trecords".format(len(self.data.index)))
+        logger.info("\t{}\tfeatures\n".format(len(self.data.columns)))
+        for index, item in enumerate(sorted(self.data.columns)): logger.info("\t{}\t'{}'".format(index + 1, item))
     def prepData(self):
         '''split out target and features based on known column names in project meta data'''
         self.y              = self.data[self.target]
@@ -169,32 +177,32 @@ class ProjectData(object):
     def preprocessData(self):
         '''transpose objects to numerical data -> binary where appropriate '''
         # convert yes/no to 1/0
-        print("\n\tprocessing target/y variable")
-        print("\n\tpreprocessing X & y, inputs and target values, replacing yes/no with 1/0")
+        logger.info("\n\tprocessing target/y variable")
+        logger.info("\n\tpreprocessing X & y, inputs and target values, replacing yes/no with 1/0")
         if self.y.dtype == object:          self.y.replace(to_replace=['yes', 'no'], value=[1, 0], inplace=True)
-        print("\t\ty (target) values completed")
+        logger.info("\t\ty (target) values completed")
         for col, col_data in self.X.iteritems():
             if col_data.dtype == object:    self.X[col].replace(to_replace=['yes', 'no'], value=[1, 0], inplace=True)
         # use separate for loop to complete in place changes before processing 'get_dummies'
-        print("\t\tX (input) values completed")
+        logger.info("\t\tX (input) values completed")
         for col, col_data in self.X.iteritems():
             if col_data.dtype == object:    self.X = self.X.join(pd.get_dummies(col_data, prefix = col))
-        print("\tconverted categorical variable into dummy/indicator variables")
+        logger.info("\tconverted categorical variable into dummy/indicator variables")
         # cast float64 to int64 for memory use and ease of reading (issue with get_dummies)
         for col in self.X.select_dtypes(['float64']):
             self.X[col] = self.X[col].astype('int64')
-        print("\tconverted float to integer")
+        logger.info("\tconverted float to integer")
         # if all else fails: _get_numeric_data()       # limit to numeric data
         # remove remaining object columns
         for col in self.X.select_dtypes(['O']):
             del self.X[col]
-        print("\tremoved initial columns, now that they have been converted")
+        logger.info("\tremoved initial columns, now that they have been converted")
         self.all        = pd.concat((self.X, self.y), axis=1)
-        print("\tcreated 'all' dataframe, adding target as final column")
+        logger.info("\tcreated 'all' dataframe, adding target as final column")
         self.features   = list(self.X.columns)
         self.label      = self.y.name
-        print("\n\tTarget/Label Description (numerical attribute statistics)\n")
-        print(self.y.describe())
+        logger.info("\n\tTarget/Label Description (numerical attribute statistics)\n")
+        logger.info(self.y.describe())
     def sniffDelim(self):
         '''helper functionuse csv library to sniff delimiters'''
         with open(self.file, 'r') as infile:
