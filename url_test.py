@@ -12,7 +12,7 @@ def fetch(url):
     from urllib import request, error
     try:
         data = request.urlopen(url).read()
-        return '{}: length {}'.format(url, len(data))
+        return '{}: length {}'.format(url, len(data))   # could log the result
     except error.HTTPError as e:
         return '{}: {}'.format(url, e)
 
@@ -23,5 +23,4 @@ with Executor(max_workers=4) as exe:
     jobs = [exe.submit(
         fetch, template.format(u)) for u in urls]
     results = [job.result() for job in jobs]
-print('\n'.join(results))
-
+print('\n'.join(results))                               # definitely log this
