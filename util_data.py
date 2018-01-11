@@ -11,12 +11,20 @@ import logging
 # data sets
 from sklearn.datasets import load_linnerud      # linear regression data set
 from sklearn.datasets import load_digits        # learning curve data set
+import quandl
 
 # == set logging ==
 logger = logging.getLogger(__name__)
 #logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 # == data ==
+
+def getQuandl(symbol):
+    '''access quandl data via api
+    examples:
+        vix futures: "CHRIS/CBOE_VX1", "CHRIS/CBOE_VX2"
+        s&p 500 e-mini: "CME/ESU2018"'''
+    return quandl.get(symbol)
 
 def mergeDFs(df1, df2, df1_cols, df2_cols, join_type='outer'):
     '''merge df1 and df2 on df1_columns (list) and df2_columns (list) using join type'''
