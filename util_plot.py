@@ -14,6 +14,9 @@ import graphviz                     # decision tree node diagram
 #import pylab as pl                 # explore this
 #import visuals as vs               # explore this
 
+# data
+import pandas as pd
+
 # === plot ===
 def plotCorr(data):
     '''plot correlation matrix for data (pandas DataFrame), exludes non-numeric attributes'''
