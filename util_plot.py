@@ -10,6 +10,7 @@ from sklearn.linear_model import LinearRegression
 # plot
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from matplotlib.sankey import Sankey
 import graphviz                     # decision tree node diagram
 #import pylab as pl                 # explore this
 #import visuals as vs               # explore this
@@ -102,6 +103,21 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None, scoring=None
     plt.legend(loc="best")
     plt.show()
 #    return plt
+
+# basic sankey chart
+def createSankey(flows = None, labels = None, orientations = None):
+    '''create simple sankey diagram
+        default example:
+            flows=[0.25, 0.15, 0.60, -0.20, -0.15, -0.05, -0.50, -0.10],
+            labels=['', '', '', 'First', 'Second', 'Third', 'Fourth', 'Fifth'],
+            orientations=[-1, 1, 0, 1, 1, 1, 0,-1]'''
+    if flows == None    : flows=[0.25, 0.15, 0.60, -0.20, -0.15, -0.05, -0.50, -0.10]
+    if labels == None   : labels=['', '', '', 'First', 'Second', 'Third', 'Fourth', 'Fifth']
+    if orientations == None:orientations=[-1, 1, 0, 1, 1, 1, 0,-1]
+    Sankey(flows=flows, labels=labels, orientations=orientations).finish()
+    plt.title("Sankey diagram with default settings")
+    plt.show()
+
 
 # === plot functions ===
 def output_image(name, format, bytes):

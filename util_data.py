@@ -61,6 +61,52 @@ def getFirstLast(name):
 
 # == data ==
 
+class iTunesXML(object):
+    '''docstring iTunesXML'''
+    def __init__(self, file):
+        self.file   = file
+        self.readFile()
+        self.createRecords()
+        self.splitRecords()
+        self.removeJunk()
+        self.createDF()
+    def readFile(self):
+        '''simple read file'''
+        with open(self.file, 'r') as infile:
+            self.stream = infile.read()
+    def createRecords(self):
+        '''split individual song records'''
+        self.records = self.stream.split('</dict>\n')
+    def splitRecords(self):
+        '''split on markup'''
+        self.songs = []
+        for record in self.records:
+            self.songs.append(record.split('\n\t'))
+    def removeJunk(self):
+        '''strip out markup'''
+        self.song_list = []
+        for song in self.songs:
+            song_dict = {}
+            for item in song:
+                if '|' in item                      : song_dict['song'], song_dict['artist'] = item.split('|')
+                elif '<key>Album</key>' in item     : song_dict['album']    = item.split('<string>')[1].strip('</string>')
+                elif '<key>Rating</key>' in item    : song_dict['rating']   = item.split('<integer>')[1].strip('</integer>')
+                elif '<key>Location</key>' in item  : song_dict['location'] = item.split('<string>')[1].strip('</string>\n')
+            self.song_list.append(song_dict)
+    def createDF(self):
+        '''create pandas DataFrame from songs'''
+        self.songsDF = pd.DataFrame(self.song_list)
+        pd.set_option('display.width', None)                    # show columns without wrapping
+        pd.set_option('display.max_columns', None)              # show all columns without elipses (...)
+#        pd.set_option('display.max_rows', self.df_col)          # show default number of rows for summary
+
+
+def readFile(file):
+    '''simple read file'''
+    with open(file, 'r') as infile: data=infile.read()
+    return data
+
+
 def loadRegSample(self):
     ''' load regression sample dataset '''
     self.data           = load_linnerud()
