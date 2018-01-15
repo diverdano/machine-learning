@@ -94,6 +94,13 @@ logger.info("set logger for app {0} - debug level as {1} using logfile: {2}".for
 
 # == test functions ==
 
+    # better exception handling
+    # try:
+    #     cr                      = classification_report(self.Yt, self.yt_pred)
+    # except Exception as e:
+    #     print("cr-exception ({}): {}".format(name, e))
+    #     cr                      = 'fail'
+
 def entropy(p1, p2):
     '''calculate entropy for population of classification within an attribute'''
     return (-p1 * math.log(p1,2) -p2 * math.log(p2,2))
@@ -213,40 +220,33 @@ class Model(object):
         i = 1
         self.result = {}
         for name, model in self.models.items():
-            startTr                     = time()
-            # model.fit(self.Xtr, self.Ytr)
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                model.fit(self.Xtr, self.Ytr)
-            endTr                       = time()
-            Tr_time                     = endTr - startTr
-            startT                      = time()
-            score = model.score(self.Xt, self.Yt)
-            endT                        = time()
-            T_time                      = endT - startT
-            decision_function           = hasattr(model,"decision_function")    # test to find if decision_function exists, else predict_proba
-            self.yt_pred                = model.predict(self.Xt)
-            cm                          = confusion_matrix(self.Yt, self.yt_pred)
-            # try:
-            #     cm                      = confusion_matrix(self.Yt, self.yt_pred)
-            # except Exception as e:
-            #     print("cm-exception ({}): {}".format(name, e))
-            #     cm                      = 'fail'
-            # cr                      = classification_report(self.Yt, self.yt_pred)
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                cr                      = classification_report(self.Yt, self.yt_pred)
-                # try:
-                #     cr                      = classification_report(self.Yt, self.yt_pred)
-                # except Exception as e:
-                #     print("cr-exception ({}): {}".format(name, e))
-                #     cr                      = 'fail'
-            self.result[name]           = {
-                                            "score"                 : score,
-                                            "confusion_matrix"      : cm,
-                                            "classification_report" : cr
-                                        }
-            print("\t{}\t{:.1%}\t{:.4f}\t\t{:.4f}\t\t{}\t\t{}".format(i, score, Tr_time, T_time, decision_function, name))
+            self.result[name]={}
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")                                 # Cause all warnings to always be triggered
+                startTr                     = time()
+                model.fit(self.Xtr, self.Ytr)                                   # Trigger a warning
+                endTr                       = time()
+                Tr_time                     = endTr - startTr
+                # Verify some things
+                # assert len(w) == 1
+                # assert issubclass(w[-1].category, DeprecationWarning)
+                # assert "deprecated" in str(w[-1].message)
+                startT                      = time()
+                score = model.score(self.Xt, self.Yt)
+                endT                        = time()
+                T_time                      = endT - startT
+                decision_function           = hasattr(model,"decision_function")    # test to find if decision_function exists, else predict_proba
+                self.yt_pred                = model.predict(self.Xt)
+                cm                          = confusion_matrix(self.Yt, self.yt_pred)
+                cr                          = classification_report(self.Yt, self.yt_pred)
+                if w:
+                    self.result[name]['warning']    = w
+                    warn_message                    = [(item.category, item.message, item.filename) for item in w]
+                else: warn_message  = None
+            self.result[name]['score']  = score
+            self.result[name]['cm']     = cm
+            self.result[name]['cr']     = cr
+            print("\t{}\t{:.1%}\t{:.4f}\t\t{:.4f}\t\t{}\t\t{}\t{}".format(i, score, Tr_time, T_time, decision_function, name, warn_message))
             i += 1
     def train_classifier(self):
         '''Fits a classifier to the training data and time the effort''' # Start the clock, train the classifier, then stop the clock
