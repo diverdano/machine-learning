@@ -41,6 +41,9 @@ def setLogLevel(debug_level, log_file):
                   'root':{'handlers':['console', 'file'], 'level':LOG_LEVEL}}
     logging.config.dictConfig(LOG_CONFIG)
 
+# == set logging ==
+logger = logging.getLogger(__name__)
+
 ## =========================
 ## === support functions ===
 ## =========================
@@ -82,5 +85,5 @@ def pickDate(offset=0, show_date=True):
     offset = int(offset)
     now = datetime.now()+timedelta(offset)
     day = datetime(now.year, now.month, now.day)
-    if show_date ==True: print(logger('Status') + 'datestamp applied: ' + day.strftime("%Y-%m-%d"))
+    if show_date == True: logger.info('datestamp applied: ' + day.strftime("%Y-%m-%d"))
     return day.strftime("%Y-%m-%d")

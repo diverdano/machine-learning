@@ -59,47 +59,15 @@ def getFirstLast(name):
 #         dialect = csv.Sniffer().sniff(infile.read())
 #     return dict(dialect.__dict__)
 
+# == helper functions ==
+
+def setDF(w=None, c=None, r=None):
+    '''set width, max columns and rows'''
+    pd.set_option('display.width', w)               # show columns without wrapping
+    pd.set_option('display.max_columns', c)         # show all columns without elipses (...)
+    pd.set_option('display.max_rows', r)            # show default number of rows for summary
+
 # == data ==
-
-class iTunesXML(object):
-    '''docstring iTunesXML'''
-    def __init__(self, file):
-        self.file   = file
-        self.readFile()
-        self.createRecords()
-        self.splitRecords()
-        self.removeJunk()
-        self.createDF()
-    def readFile(self):
-        '''simple read file'''
-        with open(self.file, 'r') as infile:
-            self.stream = infile.read()
-    def createRecords(self):
-        '''split individual song records'''
-        self.records = self.stream.split('</dict>\n')
-    def splitRecords(self):
-        '''split on markup'''
-        self.songs = []
-        for record in self.records:
-            self.songs.append(record.split('\n\t'))
-    def removeJunk(self):
-        '''strip out markup'''
-        self.song_list = []
-        for song in self.songs:
-            song_dict = {}
-            for item in song:
-                if '|' in item                      : song_dict['song'], song_dict['artist'] = item.split('|')
-                elif '<key>Album</key>' in item     : song_dict['album']    = item.split('<string>')[1].strip('</string>')
-                elif '<key>Rating</key>' in item    : song_dict['rating']   = item.split('<integer>')[1].strip('</integer>')
-                elif '<key>Location</key>' in item  : song_dict['location'] = item.split('<string>')[1].strip('</string>\n')
-            self.song_list.append(song_dict)
-    def createDF(self):
-        '''create pandas DataFrame from songs'''
-        self.songsDF = pd.DataFrame(self.song_list)
-        pd.set_option('display.width', None)                    # show columns without wrapping
-        pd.set_option('display.max_columns', None)              # show all columns without elipses (...)
-#        pd.set_option('display.max_rows', self.df_col)          # show default number of rows for summary
-
 
 def readFile(file):
     '''simple read file'''
@@ -155,6 +123,9 @@ class ProjectData(object):
     infile          = 'ml_projects.json'                # should drop target/features from json? lift from data with pd.columns[:-1] & [-1]
     outfile         = 'ml_projects.json'                # write to same file, use git to manage versions
     df_col          = 10
+    df_width        = None
+    df_max_columns  = None
+    df_max_rows     = None
     def __init__(self, project='boston_housing', file=None):
         if file:
             self.desc           = 'file used'
@@ -170,7 +141,6 @@ class ProjectData(object):
                         self.loadData()
                     except Exception as e:
                         logger.error("issue loading data: ", exc_info=True)
-#                        print("issue loading data: {}".format(e))
                         return
                     if all (k in self.projects[self.desc] for k in ('target', 'features')):
                         self.target     = self.projects[self.desc]['target']        # make y or move this to data, or change reg & lc samples?
@@ -178,13 +148,11 @@ class ProjectData(object):
                         self.prepData()
                         self.preprocessData()
                     logger.warn("'target' and 'features' need to be specified for prepping model data")
-#                    else: print("\n\t'target' and 'features' need to be specified for prepping model data")
                 else:
                     logger.warn('"{}" project not found; list of projects:\n'.format(project))
                     logger.warn("\t" + "\n\t".join(sorted(list(self.projects.keys()))))
             except Exception as e: # advanced use - except JSONDecodeError?
                 logger.error("issue reading project file:", exc_info=True)
-#                print('issue reading project file: {}'.format(e))
     def loadProjects(self):
         ''' loads project meta data from file and makes backup '''
         with open(self.infile) as file: self.projects  = json.load(file)
@@ -202,19 +170,18 @@ class ProjectData(object):
                 logger.info("\tfile loaded")
                 self.summarizeData()
             except UnicodeDecodeError:
-                logger.error('\tunicode error, trying latin1')               # implement logging
-                # self.data           = pd.read_csv(self.file, encoding='latin1')
+                logger.error('\tunicode error, trying latin1')
                 self.data           = pd.read_csv(self.file, encoding='latin1', sep=delimiter) # including sep in this call fails...
                 logger.info("\tfile loaded")
                 self.summarizeData()
         except Exception as e:
             raise e
-#            print(e)
     def summarizeData(self):
         '''separate data summary/reporting'''
-        pd.set_option('display.width', None)                    # show columns without wrapping
-        pd.set_option('display.max_columns', None)              # show all columns without elipses (...)
-        pd.set_option('display.max_rows', self.df_col)          # show default number of rows for summary
+        self.setDF()
+        # pd.set_option('display.width', None)                    # show columns without wrapping
+        # pd.set_option('display.max_columns', None)              # show all columns without elipses (...)
+        # pd.set_option('display.max_rows', self.df_col)          # show default number of rows for summary
         logger.info("\n\t{} dataset has {} data points with {} variables each\n".format(self.desc, *self.data.shape))
         logger.info("\n\tDataFrame Description (numerical attribute statistics)\n")
         logger.info(self.data.describe())
@@ -262,3 +229,8 @@ class ProjectData(object):
         with open(self.file, 'r') as infile:
             dialect = csv.Sniffer().sniff(infile.read())
         return dict(dialect.__dict__)
+    def setDF(self):
+        '''set width, max columns and rows'''
+        pd.set_option('display.width', self.df_width)               # show columns without wrapping
+        pd.set_option('display.max_columns', self.df_max_columns)   # show all columns without elipses (...)
+        pd.set_option('display.max_rows', self.df_max_rows)         # show all rows

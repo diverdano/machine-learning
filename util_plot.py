@@ -2,6 +2,9 @@
 
 # === load libraries ===
 
+# key libraries
+import logging
+
 # science
 import numpy as np                  # can remove this once its removed from plot_learning_curve
 from sklearn.model_selection import learning_curve
@@ -17,6 +20,14 @@ import graphviz                     # decision tree node diagram
 
 # data
 import pandas as pd
+
+# == set logging ==
+logger = logging.getLogger(__name__)
+
+def testLog():
+    '''test logging feature'''
+    logger.info('this is a test')
+
 
 # === plot ===
 def plotCorr(data):
@@ -93,8 +104,8 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None, scoring=None
     train_scores_std    = np.std(train_scores, axis=1)
     test_scores_mean    = np.mean(test_scores, axis=1)
     test_scores_std     = np.std(test_scores, axis=1)
-    print('train score mean & std: ', train_scores_mean, train_scores_std)
-    print('test score mean & std : ', test_scores_mean, test_scores_std)
+    logger.info('train score mean & std: ', train_scores_mean, train_scores_std)
+    logger.info('test score mean & std : ', test_scores_mean, test_scores_st)
     plt.grid()
     plt.fill_between(train_sizes, train_scores_mean - train_scores_std, train_scores_mean + train_scores_std, alpha=0.1, color="r")
     plt.fill_between(train_sizes, test_scores_mean - test_scores_std, test_scores_mean + test_scores_std, alpha=0.1, color="g")
@@ -128,7 +139,7 @@ def output_image(name, format, bytes):
     data['name'] = name
     data['format'] = format
     data['bytes'] = base64.encodestring(bytes)
-    print(image_start+json.dumps(data)+image_end)
+    logger.info(image_start+json.dumps(data)+image_end)
 
 def prettyPicture(clf, X_test, y_test):
     x_min = 0.0; x_max = 1.0

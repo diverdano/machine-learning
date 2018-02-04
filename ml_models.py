@@ -68,7 +68,7 @@ parser.add_argument('--port',           default=8000,                           
 parser.add_argument('--host',           default='localhost',                    help="sets host for web service")
 parser.add_argument('--log_file',       default='log/web.log',                  help="path/file for logging")
 parser.add_argument('--start',          dest='start',   action='store_true',    help="start the server")
-parser.add_argument('--app',            default='simco_app',                    help="name of application")
+parser.add_argument('--app',            default='machine_learning_app',         help="name of application")
 parser.add_argument('--debug',          dest='debug',   action='store_true',    help="sets server debug, and level of logging")
 parser.add_argument('--db',             default='sqlite:///simco.db',           help="designates the database to use")
 
