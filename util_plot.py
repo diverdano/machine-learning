@@ -17,9 +17,10 @@ from matplotlib.sankey import Sankey
 import graphviz                     # decision tree node diagram
 #import pylab as pl                 # explore this
 #import visuals as vs               # explore this
+#import bokeh                	    # for data visualizations
 
 # data
-import pandas as pd
+import pandas as pd                 # used for a type test in plotData function
 
 # == set logging ==
 logger = logging.getLogger(__name__)
@@ -27,7 +28,6 @@ logger = logging.getLogger(__name__)
 def testLog():
     '''test logging feature'''
     logger.info('this is a test')
-
 
 # === plot ===
 def plotCorr(data):
