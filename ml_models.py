@@ -56,8 +56,9 @@ from sklearn.metrics import explained_variance_score, make_scorer
 from sklearn.feature_selection import RFE                               # feature ranking with recursive feature elimination
 
 # custom
-import util_plot        # plotting functions
-import util_data     # data sourcing and pre-processing
+import util         # base util class
+import util_plot    # plotting functions
+import util_data    # data sourcing and pre-processing
 
 ## ===============================
 ## === command-line processing ===

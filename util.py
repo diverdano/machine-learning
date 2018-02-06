@@ -10,6 +10,7 @@ from datetime   import date, timedelta, datetime
 from time       import localtime, strftime, strptime, sleep, mktime
 import logging
 import logging.config                                       # pythons logging feature
+import requests                                             # requesting URL's
 
 ## ===================================
 ## === logging to file and console ===
