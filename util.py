@@ -49,6 +49,11 @@ logger = logging.getLogger(__name__)
 ## === support functions ===
 ## =========================
 
+def getHTML(url):
+    '''use pandas to capture html table data'''
+    response = requests.get(url)
+    return response.content
+
 def date2epoch(value, option=1):
     if int(option) == 1  : pattern = '%Y-%m-%d'
     elif int(option) == 2: pattern = '%Y-%m'
