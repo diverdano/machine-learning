@@ -7,6 +7,7 @@ import pandas as pd
 import simplejson as json
 import csv                                      # for csv sniffer
 import logging
+import html5lib
 
 # data sets
 from sklearn.datasets import load_linnerud      # linear regression data set
@@ -19,6 +20,10 @@ logger = logging.getLogger(__name__)
 
 # == data ==
 
+def readHTML2df(html):      # requires html5lib
+    '''load html table data to pandas DataFrame'''
+    return pd.read_html(html)
+
 def getQuandl(symbol):
     '''access quandl data via api
     examples:
@@ -30,6 +35,11 @@ def mergeDFs(df1, df2, df1_cols, df2_cols, join_type='outer'):
     '''merge df1 and df2 on df1_columns (list) and df2_columns (list) using join type'''
     df3 = pd.merge(df1, df2, left_on=df1_cols, right_on=df2_cols, how=join_type)
     return df3
+
+def obj2float(df, columns):
+    '''convert dataframe columns from object to float'''
+    for column in columns:
+        df.column = df.column.str.replace(',','').astype(float)
 
 def isolateMissing():
     '''isolate columns that aren't mapping'''
