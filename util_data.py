@@ -4,6 +4,7 @@
 
 # key libraries
 import pandas as pd
+import numpy as np
 import simplejson as json
 import csv                                      # for csv sniffer
 import logging
@@ -76,6 +77,12 @@ def setDF(w=None, c=None, r=None):
     pd.set_option('display.width', w)               # show columns without wrapping
     pd.set_option('display.max_columns', c)         # show all columns without elipses (...)
     pd.set_option('display.max_rows', r)            # show default number of rows for summary
+
+def dfCol2Numeric(df, cols):
+    '''use pandas apply to convert columns to numeric type'''
+    # cols = df.columns.drop('id')
+    # df[cols] = df[cols].apply(pd.to_numeric, errors='coerce')
+    return df[cols].apply(pd.to_numeric, errors='coerce')
 
 # == data ==
 
