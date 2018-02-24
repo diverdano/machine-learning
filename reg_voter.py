@@ -20,12 +20,13 @@ def getSP500():
 
 class RegVoters(object):
     '''get list of voters from voterecords.com using street (list) and cityst'''
-    domain  = 'https://voterrecords.com/street/'
-    cityst  = '-west+palm+beach-fl/'
-    co_streets = [
+    domain      = 'https://voterrecords.com/street/'
+    cityst      = '-west+palm+beach-fl/'
+    filename    = 'projects/preserve/voters.csv'
+    co_streets  = [
         "oldham+way",
         "wharton+way"]
-    streets = [
+    streets     = [
         "bay+hill+dr",
         "blackwoods+ln",
         "buckhaven+ln",
@@ -47,16 +48,19 @@ class RegVoters(object):
     test_results    = []
     pages           = {}
     people          = []
-    def __init__(self, run=True):
+    def __init__(self, run=True, filename=None):
         if run:
             self.testURLs()
             self.setupURLs()
             self.getVoters()
             self.mergeVoters()
         else:
-            self.voters = util_data.pd.read_csv('projects/preserve/voters.csv')
-            self.voters.drop(self.voters[[0]], axis=1, inplace=True)   # drop extra column
-            self.cleansVoters()
+            if filename:
+                self.voters = util_data.pd.read_csv(filename)
+            else:
+                self.voters = util_data.pd.read_csv(self.filename)
+                self.voters.drop(self.voters[[0]], axis=1, inplace=True)   # drop index column
+                self.cleansVoters()
     def testURLs(self):
         '''iterate streets, creating test urls, validate http status'''
         print('scraping pages and people counts')
@@ -107,6 +111,6 @@ class RegVoters(object):
         cols = ['age','number']
         self.voters[cols] = self.voters[cols].apply(util_data.pd.to_numeric, errors='coerce', axis=1)
         # self.voters.age = util_data.pd.to_numeric(self.voters.age)
-    def viewAddress(self):
+    def setAddress(self):
         '''concat number and street, mapping number to a string'''
         self.voters['address'] = self.voters.number.map(str) + ' ' + self.voters.street
