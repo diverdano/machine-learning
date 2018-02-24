@@ -22,6 +22,9 @@ class RegVoters(object):
     '''get list of voters from voterecords.com using street (list) and cityst'''
     domain  = 'https://voterrecords.com/street/'
     cityst  = '-west+palm+beach-fl/'
+    co_streets = [
+        "oldham+way",
+        "wharton+way"]
     streets = [
         "bay+hill+dr",
         "blackwoods+ln",
@@ -44,10 +47,16 @@ class RegVoters(object):
     test_results    = []
     pages           = {}
     people          = []
-    def __init__(self):
-        self.testURLs()
-        self.setupURLs()
-        self.getVoters()
+    def __init__(self, run=True):
+        if run:
+            self.testURLs()
+            self.setupURLs()
+            self.getVoters()
+            self.mergeVoters()
+        else:
+            self.voters = util_data.pd.read_csv('projects/preserve/voters.csv')
+            self.voters.drop(self.voters[[0]], axis=1, inplace=True)   # drop extra column
+            self.cleansVoters()
     def testURLs(self):
         '''iterate streets, creating test urls, validate http status'''
         print('scraping pages and people counts')
@@ -82,9 +91,22 @@ class RegVoters(object):
             for j, url in enumerate(urls):
                 print(str(j), sep=' ', end='', flush=True)
                 self.people.append(util_data.pd.read_html(util.requests.get(url).content))
-    def cleansVoters(self):
-        '''apply data scrubbing to scraped voter records'''
+    def mergeVoters(self):
+        '''apply data merge to scraped voter records'''
         self.voters = util_data.pd.concat([self.people[item][1] for item in list(range(len(self.people)))]) # drop summary tables and concat list of dfs to one df
         self.voters.rename(columns=lambda x: x.strip(), inplace=True)         # strip spaces in column names
         self.voters.drop(self.voters[[3]], axis=1, inplace=True)   # drop extra column
-#        self.voters['name'], self.voters['age'] = zip(*voters.voters['Person'].str.split("  ", expand=True).tolist())
+    def cleansVoters(self):
+        '''apply data scrubbing to scraped voter records'''
+        self.voters[['name','age']] = self.voters.Person.str.split('  ', expand=True)
+        self.voters.age.replace(regex=True, inplace=True, to_replace=r'[\(\)]', value=r'')
+        self.voters.drop(self.voters[['Person']], axis=1, inplace=True)
+        self.voters[['number','street']] = self.voters.Address.str.split(' ', n=1, expand=True)
+        self.voters['street'].replace(regex=True, inplace=True, to_replace=r' West Palm Beach, Fl 33412', value=r'')
+        self.voters.drop(self.voters[['Address']], axis=1, inplace=True)
+        cols = ['age','number']
+        self.voters[cols] = self.voters[cols].apply(util_data.pd.to_numeric, errors='coerce', axis=1)
+        # self.voters.age = util_data.pd.to_numeric(self.voters.age)
+    def viewAddress(self):
+        '''concat number and street, mapping number to a string'''
+        self.voters['address'] = self.voters.number.map(str) + ' ' + self.voters.street
