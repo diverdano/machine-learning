@@ -17,6 +17,18 @@ def getSP500():
 # #        df.reindex(df.index.drop(0))
     return result
 
+class PBGCrime(object):
+    '''get crime statistics for Palm Beach County crime from website'''
+    url         = 'http://www.city-data.com/crime/crime-Palm-Beach-Gardens-Florida.html'
+    def __init__(self):
+        pass
+    def getStats(self):
+        self.response   = util.requests.get(self.url)
+#        self.status      = self.response.status_code
+    def clenseStats(self):
+        '''table 7 is the relevant stats table'''
+        self.stats      = util_data.pd.read_html(self.response.content)[7]
+
 
 class RegVoters(object):
     '''get list of voters from voterecords.com using street (list) and cityst'''
