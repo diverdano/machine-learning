@@ -11,6 +11,8 @@ from sklearn.model_selection import learning_curve
 from sklearn.linear_model import LinearRegression
 
 # plot
+# import matplotlib as mpl
+# mpl.use("Qt5Agg")
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.sankey import Sankey
