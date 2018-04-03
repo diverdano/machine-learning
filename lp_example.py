@@ -1,20 +1,50 @@
+#! /usr/bin/env python
 import csv
 import numpy as np
-import scipy.optimize
+from scipy.optimize import minimize # doesn't do integer linear programming
 
 def readCsvFile(fname):
     with open(fname, 'r') as inf:
         return list(csv.reader(inf))
 
-# concessions     = readCsvFile('projects/datasmart/concessions.csv')
-# numConsessions  = len(concessions)
 items           = readCsvFile('projects/datasmart/calories.csv')
 numItems        = len(items)
 item_array      = np.array(items[1:numItems])   # start at 1 to drop the header row
-cal_array       = item_array[...,1]             # array of items in second column
-# cals            = [v for k,v in calories][1:numCal-1]
-# cal_array       = np.array(cals)
-# C               = np.zeros(numItems)
+cal_array       = item_array[...,1].astype(int)             # array of items in second column
+
+# objective:
+    # minimize number of concession items needed to acheive 2,400 calories
+    # x0 + x1 + ... + x14 = 2400
+    # convert to normal form
+    # 0 = -2400 + x0 + x1 + ... + x14
+# constraints
+    # count for each concession must be an integer
+
+def objective(x):
+    ''' objective function, x is a list of coefficients to minimize'''
+    return sum(int(i) for i in x)   # may need to move integer constraint to another function
+def constraint1(x):                 # need to pass y values (# of calories)
+    ''' first constraint function in normal form: c + x * y <= 0; y is the number of calories associated with each x'''
+    return -2400 + np.dot(x, cal_array) # using cal_array as a global array
+# def constraint1(x):                 # need to pass y values (# of calories)
+#     ''' first constraint function in normal form: c + x * y <= 0; y is the number of calories associated with each x'''
+#     return -2400 + np.dot(x, y)
+#x0      = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)     # null hypothesis?
+x0      = (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)     # null hypothesis?
+b       = (0,None)
+bnds    = (b, b, b, b, b, b, b, b, b, b, b, b, b, b)     # must be better way to do techniques
+con1    = {'type': 'eq', 'fun': constraint1}
+con2    = {'type':'eq','fun': lambda x : max([x[i]-int(x[i]) for i in range(len(x))])}  # limit to integer values
+cons    = [con1]                                            # list of constraints
+#cons    = [con1, con2]                                            # list of constraints
+# function: 2400 = sum(xi * cali), where x is count of item and cal is # of calories for that item
+# min sum x
+
+sol     = minimize(objective, x0, method='SLSQP', bounds=bnds, constraints=cons)
+x_vals  = [round(x) for x in sol.x]
+print(sol)
+print(x_vals)
+
 
 # array slicing - refresher
 # a = np.array([[1,2,3],[3,4,5],[4,5,6]]) # example
@@ -23,15 +53,6 @@ cal_array       = item_array[...,1]             # array of items in second colum
 # a[1,...]      # slice all items from the second row
 # a[...,1:]     # slice all items from column 1 onwards
 
-# objective:
-    # minimize number of concession items needed to acheive 2,400 calories
-    # x0 + x1 + ... + x14 = 2400
-# constraints
-    # 
-# count for each concession must be an integer
-# total calories = 2400
-# function: 2400 = sum(xi * cali), where x is count of item and cal is # of calories for that item
-# min sum x
 
 
 # # # Get team data
