@@ -23,7 +23,7 @@ from sklearn.model_selection import ShuffleSplit
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import learning_curve
 import sklearn.model_selection as curves
-
+from sklearn.cluster import KMeans
 # models
 ''' for Udacity nano degree
 Gaussian Naive Bayes (GaussianNB)

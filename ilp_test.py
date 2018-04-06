@@ -39,14 +39,11 @@ for i, item in enumerate(item_list):
     globals()['var_{0}'.format(i)] = LpVariable(item, 0, None, LpInteger)
 
 # Objective
-prob += var_0 + var_1 + var_2 + var_3 + var_4 + var_5 + var_6 + var_7 \
-        + var_8 + var_9 + var_10 + var_11 + var_12 + var_13
+prob += var_0 + var_1 + var_2 + var_3 + var_4 + var_5 + var_6 + var_7 + var_8 + var_9 + var_10 + var_11 + var_12 + var_13
 
 # Constraints
-prob += 200*var_0 + 0*var_1 + 255*var_2 + 300*var_3 \
-        + 300*var_4 + 320*var_5 + 265*var_6 + 240*var_7 \
-        + 280*var_8 + 560*var_9 + 480*var_10 + 500*var_11 \
-        + 150*var_12 + 120*var_13 == 2400
+prob += 200*var_0 + 0*var_1 + 255*var_2 + 300*var_3 + 300*var_4 + 320*var_5 + 265*var_6 + 240*var_7 \
+        + 280*var_8 + 560*var_9 + 480*var_10 + 500*var_11 + 150*var_12 + 120*var_13 == 2400
 
 # -- run ilp --
 
