@@ -18,6 +18,13 @@
             "absences"
         ]
     },
+    "wine":{
+        "files":{
+          "offers"      : "projects/datasmart/wine_offers.csv",
+          "transactions": "projects/datasmart/wine_trans.csv"
+        },
+        "data": ""
+    },
     "reg":{
         "target": "",
         "data": ""

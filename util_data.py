@@ -72,11 +72,36 @@ def getFirstLast(name):
 
 # == helper functions ==
 
+def strFormat(text, color):
+    key = {
+        'head'  : "\x1b[",
+        'end'   : "\x1b[0m",
+        'red'   : "0;30;41m",
+        'green' : "0;30;42m",
+        'orange': "0;30;43m",
+        'blue'  : "0;30;44m",
+        'purple': "0;30;45m",
+        'gold'  : "0;30;46m",
+        'white' : "0;30;47m"
+    }
+    return (key['head'] + key[color] + text + key['end'])
+
 def setDF(w=None, c=None, r=None):
     '''set width, max columns and rows'''
     pd.set_option('display.width', w)               # show columns without wrapping
     pd.set_option('display.max_columns', c)         # show all columns without elipses (...)
     pd.set_option('display.max_rows', r)            # show default number of rows for summary
+
+def summarizeData(desc, data):
+    '''summarize dataframe data, separate data summary/reporting'''     # test if this works for data set that is not a dict
+    logger.info(strFormat(" {} ".format(desc),'green') +
+        strFormat(" dataset has {} records with {} features".format(*data.shape),'white'))
+    for index, item in enumerate(sorted(data.columns)): logger.info("\t{}\t'{}'".format(index + 1, item))
+    logger.info(strFormat("DataFrame Description",'white'))
+    logger.info(data.describe(include='all'))
+    logger.info(strFormat("DataFrame, head",'white'))
+    logger.info(data.head())
+
 
 def dfCol2Numeric(df, cols):
     '''use pandas apply to convert columns to numeric type'''
@@ -84,18 +109,44 @@ def dfCol2Numeric(df, cols):
     # df[cols] = df[cols].apply(pd.to_numeric, errors='coerce')
     return df[cols].apply(pd.to_numeric, errors='coerce')
 
-# == data ==
+# == i/o ==
+
+def sniffDelim(file):
+    '''helper functionuse csv library to sniff delimiters'''
+    with open(file, 'r') as infile:
+        dialect = csv.Sniffer().sniff(infile.read())
+    return dict(dialect.__dict__)
 
 def readFile(file):
     '''simple read file'''
     with open(file, 'r') as infile: data=infile.read()
     return data
 
+def loadData(file):
+    '''check file delimiter and load data set as pandas.DataFrame'''
+    try:
+        logger.debug('\n\tchecking delimiter')
+        delimiter = sniffDelim(file)['delimiter']
+        logger.debug('\tdelimiter character identified: {}'.format(delimiter))
+        try:
+            data = pd.read_csv(file, sep=delimiter)
+            logger.debug("\tfile loaded")
+            return data
+        except UnicodeDecodeError:
+            logger.error('\tunicode error, trying latin1')
+            data           = pd.read_csv(file, encoding='latin1', sep=delimiter) # including sep in this call fails...
+            logger.debug("\tfile loaded")
+            return data
+    except Exception as e:
+        raise e
+
+# == create data ==
 
 def loadRegSample(self):
     ''' load regression sample dataset '''
     self.data           = load_linnerud()
     logger.info(self.data.DESCR)
+
 def loadLearningCurveSample(self):
     ''' load learning curve sample dataset '''
     self.data           = load_digits()
@@ -134,28 +185,37 @@ def makeTerrainData(self, n_points=1000):
 # #         return X_train, y_train, X_test, y_test
 
 # == data object ==
-
 class ProjectData(object):
     ''' get and setup data '''
     infile          = 'ml_projects.json'                # should drop target/features from json? lift from data with pd.columns[:-1] & [-1]
     outfile         = 'ml_projects.json'                # write to same file, use git to manage versions
-    df_col          = 10
-    df_width        = None
-    df_max_columns  = None
-    df_max_rows     = None
+    DF              = {}
     def __init__(self, project='boston_housing', file=None):
         if file:
             self.desc           = 'file used'
             self.file           = file
-            self.loadData()
+            self.data           = loadData(file)
         else:
             try:
                 self.loadProjects()
                 if project in self.projects.keys():
                     self.desc       = project # if exists project in self.projects ...
+                    if 'files' in self.projects[self.desc]:
+                        self.files  = self.projects[self.desc]['files']
+                        for file in self.files.keys():
+                            try:
+                                self.DF[file]   = loadData(self.files[file])
+                                logger.debug("file is: {}".format(file))
+                                setDF()
+                                summarizeData(desc=file, data=self.DF[file])
+                            except Exception as e:
+                                logger.error("issue loading data from: {}".format(file), exc_info=True)
+                                return
+                        return
                     self.file       = self.projects[self.desc]['file']
                     try:
-                        self.loadData()
+                        self.DF                 = loadData(self.file)
+#                        self.loadData()
                     except Exception as e:
                         logger.error("issue loading data: ", exc_info=True)
                         return
@@ -164,54 +224,25 @@ class ProjectData(object):
                         self.features   = self.projects[self.desc]['features']      # make X or move this to data, or change reg & lc samples?
                         self.prepData()
                         self.preprocessData()
-                    logger.warn("'target' and 'features' need to be specified for prepping model data")
+                    else: logger.warn("'target' and 'features' need to be specified for prepping model data")
                 else:
                     logger.warn('"{}" project not found; list of projects:\n'.format(project))
                     logger.warn("\t" + "\n\t".join(sorted(list(self.projects.keys()))))
             except Exception as e: # advanced use - except JSONDecodeError?
                 logger.error("issue reading project file:", exc_info=True)
     def loadProjects(self):
-        ''' loads project meta data from file and makes backup '''
+        ''' loads project meta data from file '''
         with open(self.infile) as file: self.projects  = json.load(file)
     def saveProjects(self):
         ''' saves project meta detail to file '''
         with open(self.outfile, 'w') as outfile: json.dump(self.projects, outfile, indent=4)
-    def loadData(self):
-        '''check file delimiter and load data set as pandas.DataFrame'''
-        try:
-            logger.info('\n\tchecking delimiter')
-            delimiter = self.sniffDelim()['delimiter']
-            logger.info('\tdelimiter character identified: {}'.format(delimiter))
-            try:
-                self.data = pd.read_csv(self.file, sep=delimiter)
-                logger.info("\tfile loaded")
-                self.summarizeData()
-            except UnicodeDecodeError:
-                logger.error('\tunicode error, trying latin1')
-                self.data           = pd.read_csv(self.file, encoding='latin1', sep=delimiter) # including sep in this call fails...
-                logger.info("\tfile loaded")
-                self.summarizeData()
-        except Exception as e:
-            raise e
-    def summarizeData(self):
-        '''separate data summary/reporting'''
-        self.setDF()
-        # pd.set_option('display.width', None)                    # show columns without wrapping
-        # pd.set_option('display.max_columns', None)              # show all columns without elipses (...)
-        # pd.set_option('display.max_rows', self.df_col)          # show default number of rows for summary
-        logger.info("\n\t{} dataset has {} data points with {} variables each\n".format(self.desc, *self.data.shape))
-        logger.info("\n\tDataFrame Description (numerical attribute statistics)\n")
-        logger.info(self.data.describe())
-        logger.info("\n\tDataFrame, head\n")
-        logger.info(self.data.head())
-        logger.info("\n\t{} Data Summary\n".format(self.desc))
-        logger.info("\t{}\trecords".format(len(self.data.index)))
-        logger.info("\t{}\tfeatures\n".format(len(self.data.columns)))
-        for index, item in enumerate(sorted(self.data.columns)): logger.info("\t{}\t'{}'".format(index + 1, item))
+    def joinDataSets(self):
+        ''' combine transactional data and meta attributes into a single array'''
+        pass
     def prepData(self):
         '''split out target and features based on known column names in project meta data'''
-        self.y              = self.data[self.target]
-        self.X              = self.data.drop(self.target, axis = 1)
+        self.y              = self.DF[self.target]
+        self.X              = self.DF.drop(self.target, axis = 1)
     def preprocessData(self):
         '''transpose objects to numerical data -> binary where appropriate '''
         # convert yes/no to 1/0
@@ -241,13 +272,3 @@ class ProjectData(object):
         self.label      = self.y.name
         logger.info("\n\tTarget/Label Description (numerical attribute statistics)\n")
         logger.info(self.y.describe())
-    def sniffDelim(self):
-        '''helper functionuse csv library to sniff delimiters'''
-        with open(self.file, 'r') as infile:
-            dialect = csv.Sniffer().sniff(infile.read())
-        return dict(dialect.__dict__)
-    def setDF(self):
-        '''set width, max columns and rows'''
-        pd.set_option('display.width', self.df_width)               # show columns without wrapping
-        pd.set_option('display.max_columns', self.df_max_columns)   # show all columns without elipses (...)
-        pd.set_option('display.max_rows', self.df_max_rows)         # show all rows
