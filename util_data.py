@@ -37,6 +37,10 @@ def mergeDFs(df1, df2, df1_cols, df2_cols, join_type='outer'):
     df3 = pd.merge(df1, df2, left_on=df1_cols, right_on=df2_cols, how=join_type)
     return df3
 
+def crosstabDF(df):
+    ''' create cross tab of two attributes, remove zeros for readability '''
+    return(pd.crosstab(tx.Offer, tx.Cust_ln).apply(lambda x: x, axis=1).replace(0,''))
+
 def obj2float(df, columns):
     '''convert dataframe columns from object to float'''
     for column in columns:

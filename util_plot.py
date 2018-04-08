@@ -16,7 +16,7 @@ from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.sankey import Sankey
-import graphviz                     # decision tree node diagram
+#import graphviz                     # decision tree node diagram
 #import pylab as pl                 # explore this
 #import visuals as vs               # explore this
 #import bokeh                	    # for data visualizations

@@ -87,8 +87,6 @@ def pargs():
 ## ===================================
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
-# util.setLogLevel(args.debug, args.log_file)
-# logger = logging.getLogger(args.app)
 logger = logging.getLogger(__name__)
 logger.info("set logger for app {0} - debug level as {1} using logfile: {2}".format(args.app, args.debug, args.log_file))
 
@@ -155,6 +153,40 @@ def printLinearRegressionModel():
     print("Your linear model is y={}*x+{}".format(m,b))
 
 # == model object ==
+
+class ClusterModel(object):
+    ''' base model for clustering '''
+    models = {
+        "k-means"       : KMeans(3),
+        "Logistic ..."  : LogisticRegression(C=1e9)}                                           # added this one
+    def __init__(self, project, split=False, score=False):
+        # self.project    = util_data.ProjectData(project)
+        self.DF         = util_data.ProjectData(project).DF     # get datasets
+        util_data.setDF()                                       # change columns
+        # self.preprocessData()
+        # if split:   self.splitTrainTest()
+        # if score:   self.fitNscore()
+    def setKMeans(self, n_clusters=3):
+        '''k means clustering
+            __init__(self,
+            n_clusters=8,       number of clusters/centroids
+            init='k-means++',   setup initial cluster centers in "smart way"
+            n_init=10,          # of times algo run with diff centriod seeds
+            max_iter=300,       max iterations for a single run
+            tol=0.0001,         relative tolerance regarding inertia to declare convergence
+            precompute_distances='auto',    faster, but takes more memory, auto sets a threshold
+            verbose=0,
+            random_state=None,  generator to initialize centers
+            copy_x=True,        if false, data is centered first
+            n_jobs=1,           if -1 all cpu's are used
+            algorithm='auto')
+        '''
+        self.clf        = KMeans(n_clusters=n_clusters)
+        self.transform  = util_data.pd.crosstab(self.DF['transactions'].Offer, self.DF['transactions'].Cust_ln).apply(lambda x: x, axis=1)
+        self.cluster    = self.clf.fit_predict(self.transform)
+        self.counts     = util_data.pd.pivot_table(self.DF['transactions'], index=['Offer'], aggfunc=len)
+        self.DF['offers']['kmeans'] = self.cluster
+        self.DF['offers']['counts'] = self.counts
 
 class Model(object):
     ''' base model object '''
@@ -399,37 +431,6 @@ class ModelNB(ModelSimple):
     def createClassifier(self):
         self.clf = GaussianNB()
 
-
-class ClusterModel(object):
-    ''' base model for clustering '''
-    models = {
-        "k-means"       : KMeans(3),
-        "Logistic ..."  : LogisticRegression(C=1e9)}                                           # added this one
-    def __init__(self, project, split=False, score=False):
-        # self.project    = util_data.ProjectData(project)
-        self.DF         = util_data.ProjectData(project).DF     # get datasets
-        util_data.setDF()                                       # change columns
-        # self.preprocessData()
-        # if split:   self.splitTrainTest()
-        # if score:   self.fitNscore()
-    def setKMeans(self, n_clusters=3):
-        '''k means clustering
-            __init__(self,
-            n_clusters=8,       number of clusters/centroids
-            init='k-means++',   setup initial cluster centers in "smart way"
-            n_init=10,          # of times algo run with diff centriod seeds
-            max_iter=300,       max iterations for a single run
-            tol=0.0001,         relative tolerance regarding inertia to declare convergence
-            precompute_distances='auto',    faster, but takes more memory, auto sets a threshold
-            verbose=0,
-            random_state=None,  generator to initialize centers
-            copy_x=True,        if false, data is centered first
-            n_jobs=1,           if -1 all cpu's are used
-            algorithm='auto')
-        '''
-        self.clf = KMeans(n_clusters=n_clusters)
-        # self.train_classifier()
-        # self.predict_labels()
 
 # == transform data ==
 
