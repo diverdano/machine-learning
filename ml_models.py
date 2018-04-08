@@ -162,10 +162,17 @@ class ClusterModel(object):
     def __init__(self, project, split=False, score=False):
         # self.project    = util_data.ProjectData(project)
         self.DF         = util_data.ProjectData(project).DF     # get datasets
-        util_data.setDF()                                       # change columns
-        # self.preprocessData()
+        self.preprocessData()
         # if split:   self.splitTrainTest()
         # if score:   self.fitNscore()
+    def preprocessData(self):
+        ''' preprocess loaded data '''
+        util_data.setDF()                                       # change columns
+        self.offers     = self.DF['offers']
+        self.trans      = self.DF['transactions']
+        self.transform  = util_data.pd.crosstab(self.trans.Offer, self.trans.Cust_ln).apply(lambda x: x, axis=1)
+        self.counts     = util_data.pd.pivot_table(self.trans, index=['Offer'], aggfunc=len)
+        self.offers['counts']       = self.counts  # do this as a join
     def setKMeans(self, n_clusters=3):
         '''k means clustering
             __init__(self,
@@ -181,12 +188,9 @@ class ClusterModel(object):
             n_jobs=1,           if -1 all cpu's are used
             algorithm='auto')
         '''
-        self.clf        = KMeans(n_clusters=n_clusters)
-        self.transform  = util_data.pd.crosstab(self.DF['transactions'].Offer, self.DF['transactions'].Cust_ln).apply(lambda x: x, axis=1)
-        self.cluster    = self.clf.fit_predict(self.transform)
-        self.counts     = util_data.pd.pivot_table(self.DF['transactions'], index=['Offer'], aggfunc=len)
-        self.DF['offers']['kmeans'] = self.cluster
-        self.DF['offers']['counts'] = self.counts
+        self.clf                = KMeans(n_clusters=n_clusters)
+        self.offers['clusters'] = self.clf.fit_predict(self.transform)
+        self.score              = self.clf.score(self.transform)
 
 class Model(object):
     ''' base model object '''
