@@ -161,7 +161,7 @@ class ClusterModel(object):
     def __init__(self, project, split=False, score=False, results=False, params={}):
         self.DF         = util_data.ProjectData(project).DF     # get datasets
         self.preprocessData()
-        logger.info(params)
+        logger.info('params: ' + str(params))
         if score:   self.fitNscore(params)
         if results: print(self.__repr__())
     def __repr__(self):

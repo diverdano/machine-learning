@@ -98,13 +98,12 @@ def setDF(w=None, c=None, r=None, f='{:,.1f}'):
     pd.options.display.float_format = f.format
 def summarizeData(desc, data):
     '''summarize dataframe data, separate data summary/reporting'''     # test if this works for data set that is not a dict
-    logger.info(strFormat(" {} ".format(desc),'green') +
-        strFormat(" dataset has {} records with {} features".format(*data.shape),'white'))
+    logger.info("\n\n" + strFormat(" {} ".format(desc),'green') +
+        strFormat(" dataset has {} records with {} features".format(*data.shape),'white') + "\n")
     for index, item in enumerate(sorted(data.columns)): logger.info("\t{}\t'{}'".format(index + 1, item))
-    logger.info(strFormat("DataFrame Description",'white'))
-    logger.info(data.describe(include='all'))
-    logger.info(strFormat("DataFrame, head",'white'))
-    logger.info(data.head())
+    logger.info("\n\n== DataFrame Description ==\n\n" + str(data.describe(include='all')) + "\n\n")
+    # logger.info(data.describe(include='all'))
+    logger.info("\n\n== DataFrame, head ==\n\n" + str(data.head()) + "\n\n")
 
 
 def dfCol2Numeric(df, cols):
