@@ -90,12 +90,12 @@ def strFormat(text, color):
     }
     return (key['head'] + key[color] + text + key['end'])
 
-def setDF(w=None, c=None, r=None):
+def setDF(w=None, c=None, r=None, f='{:,.1f}'):
     '''set width, max columns and rows'''
     pd.set_option('display.width', w)               # show columns without wrapping
     pd.set_option('display.max_columns', c)         # show all columns without elipses (...)
     pd.set_option('display.max_rows', r)            # show default number of rows for summary
-
+    pd.options.display.float_format = f.format
 def summarizeData(desc, data):
     '''summarize dataframe data, separate data summary/reporting'''     # test if this works for data set that is not a dict
     logger.info(strFormat(" {} ".format(desc),'green') +

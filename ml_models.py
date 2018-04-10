@@ -1,4 +1,4 @@
-#!usr/bin/env python
+#!/usr/bin/env python
 
 # == load libraries ==
 
@@ -72,6 +72,8 @@ parser.add_argument('--start',          dest='start',   action='store_true',    
 parser.add_argument('--app',            default='machine_learning_app',         help="name of application")
 parser.add_argument('--debug',          dest='debug',   action='store_true',    help="sets server debug, and level of logging")
 parser.add_argument('--db',             default='sqlite:///simco.db',           help="designates the database to use")
+parser.add_argument('--k_clusters',     default=8,                              help="set k-means clusters")
+parser.add_argument('--k_centers',      default=False,                          help="include k-means cluster centers")
 
 args        = parser.parse_args()
 
@@ -155,42 +157,58 @@ def printLinearRegressionModel():
 # == model object ==
 
 class ClusterModel(object):
-    ''' base model for clustering '''
-    models = {
-        "k-means"       : KMeans(3),
-        "Logistic ..."  : LogisticRegression(C=1e9)}                                           # added this one
-    def __init__(self, project, split=False, score=False):
-        # self.project    = util_data.ProjectData(project)
+    ''' base model for clustering (unsupervised)'''
+    def __init__(self, project, split=False, score=False, results=False, params={}):
         self.DF         = util_data.ProjectData(project).DF     # get datasets
         self.preprocessData()
-        # if split:   self.splitTrainTest()
-        # if score:   self.fitNscore()
+        logger.info(params)
+        if score:   self.fitNscore(params)
+        if results: print(self.__repr__())
+    def __repr__(self):
+        return('ClusterModel:\n{0}\n\noffers:\n{1}\niterations: {2}\ninertia: {3}\nlabels: {4}'.format(
+            self.clf,
+            self.offers,
+            self.clf.n_iter_,
+            self.clf.inertia_,      # Sum of distances of samples to their closest cluster center. (score is opposite of this)
+            self.clf.labels_))      # Labels of each point
+    #         self.clf.cluster_centers_))  # Coordinates of cluster centers (n_clusters, n_features)
     def preprocessData(self):
         ''' preprocess loaded data '''
         util_data.setDF()                                       # change columns
-        self.offers     = self.DF['offers']
-        self.trans      = self.DF['transactions']
-        self.transform  = util_data.pd.crosstab(self.trans.Offer, self.trans.Cust_ln).apply(lambda x: x, axis=1)
-        self.counts     = util_data.pd.pivot_table(self.trans, index=['Offer'], aggfunc=len)
-        self.offers['counts']       = self.counts  # do this as a join
-    def setKMeans(self, n_clusters=3):
-        '''k means clustering
-            __init__(self,
-            n_clusters=8,       number of clusters/centroids
-            init='k-means++',   setup initial cluster centers in "smart way"
-            n_init=10,          # of times algo run with diff centriod seeds
-            max_iter=300,       max iterations for a single run
-            tol=0.0001,         relative tolerance regarding inertia to declare convergence
-            precompute_distances='auto',    faster, but takes more memory, auto sets a threshold
-            verbose=0,
-            random_state=None,  generator to initialize centers
-            copy_x=True,        if false, data is centered first
-            n_jobs=1,           if -1 all cpu's are used
-            algorithm='auto')
-        '''
-        self.clf                = KMeans(n_clusters=n_clusters)
-        self.offers['clusters'] = self.clf.fit_predict(self.transform)
-        self.score              = self.clf.score(self.transform)
+        self.offers     = self.DF['offers']                     # assign offers dataframe
+        self.trans      = self.DF['transactions']               # assign transactions dataframe
+        self.offer_log  = util_data.pd.crosstab(self.trans.Cust_ln, self.trans.Offer).apply(lambda x: x, axis=1)
+        # self.offers     = self.offers.assign(counts=self.offer_log.sum().values) # adding count of purchases for offer
+        self.offers.insert(0, 'counts', self.offer_log.sum().values)    # prepend column
+        self.purchases  = util_data.pd.DataFrame(self.offer_log.sum(axis=1), columns =['purchases']) # new dataframe for accumulating kmeans data
+        self.purchases.reset_index(inplace=True)                # align to zero-based index
+    def fitNscore(self, params):
+        ''' k means clustering '''
+        self.clf                = KMeans(
+            n_clusters              =params.get('n_clusters', 8),         # number of clusters/centroids
+            init                    =params.get('init', 'k-means++'),    # setup initial cluster centers in "smart way"
+            n_init                  =params.get('n_init', 10),           # of times algo run with diff centriod seeds
+            max_iter                =params.get('max_iter', 300),           # max iterations for a single run
+            tol                     =params.get('tol', 0.0001),          # relative tolerance regarding inertia to declare convergence
+            precompute_distances    =params.get('precompute_distances', 'auto'),# faster, but takes more memory, auto sets a threshold
+            verbose                 =params.get('verbose', 0),
+            random_state            =params.get('random_state', None),   # generator to initialize centers
+            copy_x                  =params.get('copy_x', True),         # if false, data is centered first
+            n_jobs                  =params.get('n_jobs', 1),            # if -1 all cpu's are used
+            algorithm               =params.get('algorithm', 'auto'))
+        self.fit                    = self.clf.fit(self.offer_log)      # predict is redundant without new data
+        self.transform              = self.clf.transform(self.offer_log)    # X transformed to new space
+        self.purchases.insert(self.purchases.shape[1], 'labels', self.clf.labels_) # append as rightmost column
+        self.opt_cluster_centers    = util_data.pd.DataFrame(self.clf.cluster_centers_.T)    # transform with features as index
+        self.offers                 = self.opt_cluster_centers.join(self.offers, how='outer')
+        # self.predict                = self.clf.predict(self.offer_log)  # compute cluster indexes for each sample (100 samples, 7 features)
+        # self.score                  = self.clf.score(self.offer_log)  # score is redundant without new data
+    def plotClusters(self):
+        ''' plot clusters '''
+        title   = 'kmeans cluster plot'
+        xlabel  = 'dunno yet'
+        ylabel  = 'dunno yet'
+        util_plot.plotData(self.clf.transform() )
 
 class Model(object):
     ''' base model object '''
@@ -672,3 +690,7 @@ def PredictTrials(X, y, fitter, data):
     # except Exception as e:
     #     print("cr-exception ({}): {}".format(name, e))
     #     cr                      = 'fail'
+
+# if __name__=="__main__":
+#     cm = ClusterModel('wine', score=True, params={'n_clusters':args.k_clusters})
+#     print(cm)
