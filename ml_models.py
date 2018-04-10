@@ -165,13 +165,14 @@ class ClusterModel(object):
         if score:   self.fitNscore(params)
         if results: print(self.__repr__())
     def __repr__(self):
-        return('ClusterModel:\n{0}\n\noffers:\n{1}\niterations: {2}\ninertia: {3}\nlabels: {4}'.format(
+        return('\nClusterModel: {0}\n\niterations: {1}\ninertia: {2:,.1f}\
+            \n\npurchases:\n{3}\ntotal: {4}\n\noffers:\n{5}'.format(
             self.clf,
-            self.offers,
             self.clf.n_iter_,
-            self.clf.inertia_,      # Sum of distances of samples to their closest cluster center. (score is opposite of this)
-            self.clf.labels_))      # Labels of each point
-    #         self.clf.cluster_centers_))  # Coordinates of cluster centers (n_clusters, n_features)
+            self.clf.inertia_,
+            self.purchases.groupby(['labels']).sum(),
+            self.purchases.purchases.sum(),
+            self.offers))
     def preprocessData(self):
         ''' preprocess loaded data '''
         util_data.setDF()                                       # change columns
@@ -200,7 +201,7 @@ class ClusterModel(object):
         self.transform              = self.clf.transform(self.offer_log)    # X transformed to new space
         self.purchases.insert(self.purchases.shape[1], 'labels', self.clf.labels_) # append as rightmost column
         self.opt_cluster_centers    = util_data.pd.DataFrame(self.clf.cluster_centers_.T)    # transform with features as index
-        self.offers                 = self.opt_cluster_centers.join(self.offers, how='outer')
+        self.offers                 = self.opt_cluster_centers.join(self.offers, how='outer')# Coordinates of cluster centers (n_clusters, n_features)
         # self.predict                = self.clf.predict(self.offer_log)  # compute cluster indexes for each sample (100 samples, 7 features)
         # self.score                  = self.clf.score(self.offer_log)  # score is redundant without new data
     def plotClusters(self):
