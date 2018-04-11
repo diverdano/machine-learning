@@ -54,6 +54,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, r
 from sklearn.metrics import f1_score, r2_score, mean_absolute_error, mean_squared_error
 from sklearn.metrics import explained_variance_score, make_scorer
 from sklearn.feature_selection import RFE                               # feature ranking with recursive feature elimination
+from sklearn.metrics import silhouette_samples, silhouette_score        # for kmeans analysis
 
 # custom
 import util         # base util class
@@ -158,31 +159,60 @@ def printLinearRegressionModel():
 
 class ClusterModel(object):
     ''' base model for clustering (unsupervised)'''
-    def __init__(self, project, split=False, score=False, results=False, params={}):
+    def __init__(self, project, split=False, score=False, silhouette=False, results=False, params={}):
         self.DF         = util_data.ProjectData(project).DF     # get datasets
         self.preprocessData()
         logger.info('params: ' + str(params))
-        if score:   self.fitNscore(params)
-        if results: print(self.__repr__())
+        if silhouette:  self.fitSilhouette()
+        if score:       self.fitNscore(params)
+        if results:     print(self.__repr__())
     def __repr__(self):
         return('\nClusterModel: {0}\n\niterations: {1}\ninertia: {2:,.1f}\
             \n\npurchases:\n{3}\ntotal: {4}\n\noffers:\n{5}'.format(
             self.clf,
             self.clf.n_iter_,
             self.clf.inertia_,
-            self.purchases.groupby(['labels']).sum(),
+            self.purchases.groupby(['label']).sum(),
             self.purchases.purchases.sum(),
             self.offers))
+    def __str__(self):
+        return('\nClusterModel: {0}\n\niterations: {1}\ninertia: {2:,.1f}\
+            \n\npurchases:\n{3}\ntotal: {4}\n\noffers:\n{5}'.format(
+            self.clf,
+            self.clf.n_iter_,
+            self.clf.inertia_,
+            self.purchases.groupby(['label']).sum(),
+            self.purchases.purchases.sum(),
+            self.offers.replace(0,'-')))
+    def viewPurchaseLabels(self, format=1):
+        '''removes decimal places in df table'''
+        util_data.setDF(w=None, c=None, r=None, f='{:,.0f}')
+        if format==1  : return self.purchase_labels.replace('0','-')
+        elif format==2: return self.purchase_labels.sort_values(by=[0,1,2,3], ascending=False).replace('0','-')
     def preprocessData(self):
         ''' preprocess loaded data '''
         util_data.setDF()                                       # change columns
         self.offers     = self.DF['offers']                     # assign offers dataframe
         self.trans      = self.DF['transactions']               # assign transactions dataframe
+        self.features   = self.offers.columns                   # used to determine how many clusters to test
         self.offer_log  = util_data.pd.crosstab(self.trans.Cust_ln, self.trans.Offer).apply(lambda x: x, axis=1)
         # self.offers     = self.offers.assign(counts=self.offer_log.sum().values) # adding count of purchases for offer
         self.offers.insert(0, 'counts', self.offer_log.sum().values)    # prepend column
         self.purchases  = util_data.pd.DataFrame(self.offer_log.sum(axis=1), columns =['purchases']) # new dataframe for accumulating kmeans data
         self.purchases.reset_index(inplace=True)                # align to zero-based index
+    def fitSilhouette(self):
+        ''' k means clustering - cluster "sensitivity" analysis '''
+        # number of clusters to test (e.g. 2 to # of features)
+        self.n_clusters = {}
+        for n_cluster in range(2, len(self.features) + 1):
+            self.clf                    = KMeans(n_clusters=n_cluster)
+            self.cluster_labels         = self.clf.fit_predict(self.offer_log)
+            self.silhouette_avg         = silhouette_score(self.offer_log, self.clf.labels_)
+            self.n_clusters[n_cluster]  = self.silhouette_avg
+            logger.info("For n_clusters = {0} the average silhoette_score is: {1:,.3f}".format(self.clf.n_clusters, self.silhouette_avg))
+            self.sample_silhouette_values = silhouette_samples(self.offer_log, self.clf.labels_)
+        max_value = max(self.n_clusters, key=lambda key: self.n_clusters[key])
+        logger.info("{0} clusters produces the highest average silhouette value: {1:,.3f}".format(max_value, self.n_clusters[max_value]))
     def fitNscore(self, params):
         ''' k means clustering '''
         self.clf                = KMeans(
@@ -199,8 +229,10 @@ class ClusterModel(object):
             algorithm               =params.get('algorithm', 'auto'))
         self.fit                    = self.clf.fit(self.offer_log)      # predict is redundant without new data
         self.transform              = self.clf.transform(self.offer_log)    # X transformed to new space
-        self.purchases.insert(self.purchases.shape[1], 'labels', self.clf.labels_) # append as rightmost column
+        self.purchases.insert(self.purchases.shape[1], 'label', self.clf.labels_) # append as rightmost column
+        self.purchase_labels        = self.purchases.pivot_table(values='purchases', index=['Cust_ln'], columns=['label'], aggfunc='sum', fill_value='0')
         self.opt_cluster_centers    = util_data.pd.DataFrame(self.clf.cluster_centers_.T)    # transform with features as index
+        # self.opt_cluster_centers    = util_data.np.around(util_data.np.absolute(self.opt_cluster_centers),1)
         self.offers                 = self.opt_cluster_centers.join(self.offers, how='outer')# Coordinates of cluster centers (n_clusters, n_features)
         # self.predict                = self.clf.predict(self.offer_log)  # compute cluster indexes for each sample (100 samples, 7 features)
         # self.score                  = self.clf.score(self.offer_log)  # score is redundant without new data

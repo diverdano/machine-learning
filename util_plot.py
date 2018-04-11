@@ -258,3 +258,6 @@ def viewRegPlots(project, color='yellow', alpha=0.4, featureStart=0, features=4)
     fig.suptitle('Regression ScatterPlots', fontsize = 16, y = 1)
     fig.set_tight_layout(tight='tight')
     fig.show()
+
+
+# == silhouette plots ==

@@ -96,6 +96,7 @@ def setDF(w=None, c=None, r=None, f='{:,.1f}'):
     pd.set_option('display.max_columns', c)         # show all columns without elipses (...)
     pd.set_option('display.max_rows', r)            # show default number of rows for summary
     pd.options.display.float_format = f.format
+    np.set_printoptions(formatter={'float': lambda x: f.format(x)})
 def summarizeData(desc, data):
     '''summarize dataframe data, separate data summary/reporting'''     # test if this works for data set that is not a dict
     logger.info("\n\n" + strFormat(" {} ".format(desc),'green') +
